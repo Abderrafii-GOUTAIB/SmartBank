@@ -1,20 +1,39 @@
-package org.example;
+package org.example.model;
+
+import org.example.model.Displayable;
 
 public class BankAccount implements Displayable {
 
-    // --- Encapsulation: private fields ---
-    private String accountNumber;
-    private String ownerName;
+    // ============================================================
+    // ACCESS MODIFIERS IN ACTION — watch the visibility choices
+    // ============================================================
+
+    // PRIVATE STATIC — only this class manages the counter
+    // No one outside should touch the ID generator
+    private static int nextId = 1;
+
+    // PUBLIC STATIC FINAL — everyone can READ the bank name, no one can change it
+    public static final String BANK_NAME = "SmartBank";
+
+    // PRIVATE — only this class touches these directly
+    // Outside code uses getters (controlled access)
+    private final String accountNumber;
+    private final String ownerName;
     private double balance;
     private boolean isActive;
-
-    // --- Transaction history (arrays from Step 4) ---
     private String[] transactionHistory;
     private int transactionCount;
 
-    // --- Constructor (basic — we'll improve this in Step 7) ---
-    public BankAccount(String accountNumber, String ownerName, double initialBalance) {
-        this.accountNumber = accountNumber;
+    // --- Constructors (PUBLIC — other packages need to create accounts) ---
+
+    public BankAccount(String ownerName, double initialBalance) {
+        if (ownerName == null || ownerName.isBlank()) {
+            throw new IllegalArgumentException("Owner name cannot be empty.");
+        }
+        if (initialBalance < 0) {
+            throw new IllegalArgumentException("Initial balance cannot be negative.");
+        }
+        this.accountNumber = generateAccountNumber();
         this.ownerName = ownerName;
         this.balance = initialBalance;
         this.isActive = true;
@@ -22,7 +41,27 @@ public class BankAccount implements Displayable {
         this.transactionCount = 0;
     }
 
-    // --- Methods extracted in Step 3 ---
+    public BankAccount(String ownerName) {
+        this(ownerName, 0.0);
+    }
+
+    public BankAccount(BankAccount other) {
+        this(other.ownerName, 0.0);
+    }
+
+    // PRIVATE STATIC — internal utility, no one outside needs this
+    private static String generateAccountNumber() {
+        String accNum = String.format("ACC-%04d", nextId);
+        nextId++;
+        return accNum;
+    }
+
+    // PUBLIC STATIC — useful query, safe to expose
+    public static int getTotalAccounts() {
+        return nextId - 1;
+    }
+
+    // --- PUBLIC methods — the API we expose ---
 
     public boolean deposit(double amount) {
         if (amount <= 0) {
@@ -31,8 +70,6 @@ public class BankAccount implements Displayable {
         }
         balance += amount;
         addTransaction("DEPOSIT", amount);
-        System.out.println("✅ Deposited $" + String.format("%.2f", amount));
-        System.out.println("💰 New Balance: $" + String.format("%.2f", balance));
         return true;
     }
 
@@ -48,13 +85,10 @@ public class BankAccount implements Displayable {
         }
         balance -= amount;
         addTransaction("WITHDRAWAL", amount);
-        System.out.println("✅ Withdrew $" + String.format("%.2f", amount));
-        System.out.println("💰 New Balance: $" + String.format("%.2f", balance));
         return true;
     }
 
-    // --- Transaction history (Step 4) ---
-
+    // PRIVATE — internal bookkeeping, no one outside needs to call this
     private void addTransaction(String type, double amount) {
         if (transactionCount < transactionHistory.length) {
             String record = String.format("%s: $%.2f | Balance: $%.2f",
@@ -70,34 +104,34 @@ public class BankAccount implements Displayable {
             System.out.println("  No transactions yet.");
             return;
         }
-        // Show last 5 transactions
         int start = Math.max(0, transactionCount - 5);
         for (int i = start; i < transactionCount; i++) {
             System.out.println("  " + (i + 1) + ". " + transactionHistory[i]);
         }
     }
 
-    // --- Polymorphism: implementing the interface (Step 6) ---
+    // --- Displayable interface implementation ---
 
     @Override
     public void displayInfo() {
         System.out.println("--- Account Details ---");
+        System.out.println("Bank:      " + BANK_NAME);
         System.out.println("Account #: " + accountNumber);
         System.out.println("Owner:     " + ownerName);
         System.out.println("Balance:   $" + String.format("%.2f", balance));
         System.out.println("Active:    " + (isActive ? "Yes ✅" : "No ❌"));
     }
 
-    // --- Getters (encapsulation — controlled read access) ---
+    // --- PUBLIC getters — controlled read-only access ---
 
     public String getAccountNumber() { return accountNumber; }
     public String getOwnerName()     { return ownerName; }
     public double getBalance()       { return balance; }
     public boolean isActive()        { return isActive; }
+    public int getTransactionCount() { return transactionCount; }
 
     @Override
     public String toString() {
-        return String.format("Account[%s] %s — $%.2f",
-                accountNumber, ownerName, balance);
+        return String.format("[%s] %s — $%.2f", accountNumber, ownerName, balance);
     }
 }
