@@ -19,7 +19,7 @@ public class InsufficientFundsException extends RuntimeException {
     public double getAvailable() {
         return available;
     }
-    public double  getShortFall(){
-        return requested + available;
+    public double getShortfall(){
+        return requested - available;
     }
 }

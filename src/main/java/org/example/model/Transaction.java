@@ -39,7 +39,7 @@ public class Transaction {
         );
     }
 
-    public Integer getInt() {
+    public Integer getId() {
         return transactionId;
     }
 

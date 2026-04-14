@@ -1,36 +1,37 @@
 package org.example.service;
 
-import org.example.model.*;
 
-// We must IMPORT classes from other packages
-// This is like saying "I need the BankAccount blueprint from the model folder"
+import org.example.model.BankAccount;
+import org.example.model.InsufficientFundsException;  // ⬅️ ADD THIS
+import org.example.service.ReceiptGenerator;
+
 public class AccountService {
-    // This service handles all account operations
-    // It talks to BankAccount through PUBLIC methods only
-    // It CANNOT access private fields like 'balance' directly
 
-    public BankAccount createAccount(String ownerName , double balance) {
+    public BankAccount createAccount(String ownerName, double initialBalance) {
         try {
-            BankAccount account = new BankAccount(ownerName, balance);
-            System.out.println("✅ Account created for " + ownerName);
+            BankAccount account = new BankAccount(ownerName, initialBalance);
+            System.out.println("📋 Created: " + account);
             return account;
         } catch (IllegalArgumentException e) {
-            System.out.println("❌ Failed to create account: " + e.getMessage());
+            System.out.println("❌ Cannot create account: " + e.getMessage());
             return null;
         }
     }
 
-    public BankAccount createAccount( String ownerName){
+    public BankAccount createAccount(String ownerName) {
         return createAccount(ownerName, 0.0);
     }
 
     public void processDeposit(BankAccount account, double amount) {
         System.out.println();
-        System.out.println("Processing deposit for " + account.getOwnerName() + "...");
         try {
             account.deposit(amount);
-            System.out.println("✅ Success! New balance: $"
-                    + String.format("%.2f", account.getBalance()));
+
+            // 🆕 Generate a receipt for the last transaction
+            var transactions = account.getTransactions();
+            var lastTxn = transactions[transactions.length - 1];
+            System.out.println(ReceiptGenerator.generateTransactionReceipt(account, lastTxn));
+
         } catch (IllegalArgumentException e) {
             System.out.println("❌ Deposit failed: " + e.getMessage());
         }
@@ -38,35 +39,58 @@ public class AccountService {
 
     public void processWithdrawal(BankAccount account, double amount) {
         System.out.println();
-        System.out.println("Processing withdrawal for " + account.getOwnerName() + "...");
         try {
             account.withdraw(amount);
-            System.out.println("✅ Success! New balance: $"
-                    + String.format("%.2f", account.getBalance()));
+
+            // 🆕 Generate a receipt
+            var transactions = account.getTransactions();
+            var lastTxn = transactions[transactions.length - 1];
+            System.out.println(ReceiptGenerator.generateTransactionReceipt(account, lastTxn));
+
+        } catch (InsufficientFundsException e) {
+            System.out.println("❌ " + e.getMessage());
+            System.out.println("   You are short by: $"
+                    + String.format("%.2f", e.getShortfall()));
         } catch (IllegalArgumentException e) {
             System.out.println("❌ Withdrawal failed: " + e.getMessage());
-        } catch (InsufficientFundsException e) {
-            System.out.println("❌ Withdrawal failed: " + e.getMessage());
         }
     }
 
-    public void printSummary(BankAccount... account) {
-        // BankAccount... is varargs — accepts any number of accounts
+    // 🆕 Now returns a String instead of printing directly
+    // This means we can print it, save it to file, send it — anything
+    public void printSummary(BankAccount... accounts) {
+        System.out.println(ReceiptGenerator.generateBankSummary(accounts));
+    }
+
+    // 🆕 Print full account report with transaction history
+    public void printAccountReport(BankAccount account) {
+        System.out.println(ReceiptGenerator.generateAccountReport(account));
+    }
+
+    // 🆕 Search accounts by name
+    public void searchByName(String searchTerm, BankAccount... accounts) {
         System.out.println();
-        System.out.println("╔══════════════════════════════════════════════════════════════════╗");
-        System.out.println("║         " + BankAccount.BANK_NAME + " — Account Summary          ║");
-        System.out.println("╠══════════════════════════════════════════════════════════════════╣");
+        System.out.println("--- Search results for: \"" + searchTerm + "\" ---");
 
-        double totalBalance = 0;
-        System.out.println("║  Account Number  │ Owner Name       │ Balance        │ Status    ║");
-        for (BankAccount bankAccount : account) {
-            totalBalance += bankAccount.getBalance();
+        boolean found = false;
+        for (BankAccount account : accounts) {
+            if (account == null) continue;
+
+            // .toLowerCase() for case-insensitive comparison
+            // .contains() to check if searchTerm exists in the name
+            if (account.getOwnerName().toLowerCase().contains(searchTerm.toLowerCase())) {
+                // 🆕 Highlight the matching part
+                String highlighted = ReceiptGenerator.highlightMatch(
+                        account.getOwnerName(), searchTerm);
+                System.out.println("  ✅ " + account.getAccountNumber()
+                        + " — " + highlighted
+                        + " ($" + String.format("%.2f", account.getBalance()) + ")");
+                found = true;
+            }
         }
-        System.out.println("╠══════════════════════════════════════════════════════════════════╣");
-        System.out.printf(" ║  Total (%d accounts)              $%10.2f                        ║%n",
-                BankAccount.getTotalAccounts(), totalBalance);
-        System.out.println("╚══════════════════════════════════════════════════════════════════╝");
 
+        if (!found) {
+            System.out.println("  No accounts found matching \"" + searchTerm + "\"");
+        }
     }
-
 }
