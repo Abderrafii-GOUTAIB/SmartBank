@@ -4,6 +4,7 @@ import org.example.service.AccountService;
 
 
 import java.util.Scanner;
+import service.InputParser;
 
 
 public class Main {
@@ -14,6 +15,10 @@ public class Main {
 
         System.out.println("=========" + BankAccount.BANK_NAME+ "==========");
         System.out.println("Total accounts" + BankAccount.getTotalAccounts()+ "!");
+
+        // 🆕 Demonstrate the wrapper comparison trap
+        InputParser.demonstrateWrapperTrap();
+        System.out.println();
 
         // --- Create accounts through the service ---
         System.out.println("--- Creating Accounts ---");
@@ -43,39 +48,38 @@ public class Main {
             System.out.print("Choose (1-8): ");
 
             try {
-                int choice = scanner.nextInt();
+                int choice = InputParser.readInt(scanner, "Choose (1-8): ", 1, 8);
                 switch (choice) {
                     case 1 -> System.out.println("💰 Balance: $"
                             + String.format("%.2f", currentAccount.getBalance()));
-                    case 2 -> {
-                        System.out.print("Deposit amount: $");
-                        accountService.processDeposit(currentAccount, scanner.nextDouble());
 
+                    case 2 -> {
+                        // 🆕 readPositiveDouble — keeps asking until valid
+                        double amount = InputParser.readPositiveDouble(scanner, "Deposit amount: $");
+                        accountService.processDeposit(currentAccount, amount);
                     }
+
                     case 3 -> {
-                        System.out.print("Withdrawal amount: $");
-                        accountService.processWithdrawal(currentAccount, scanner.nextDouble());
+                        double amount = InputParser.readPositiveDouble(scanner, "Withdrawal amount: $");
+                        accountService.processWithdrawal(currentAccount, amount);
                     }
+
                     case 4 -> currentAccount.displayInfo();
+
                     case 5 -> currentAccount.printMiniStatement();
 
-                    case 6 -> {
-                        accountService.printSummary(account, account2, account3);
-                    }
+                    case 6 -> accountService.printSummary(account, account2, account3);
+
                     case 7 -> {
-                        System.out.println("Select account:");
-                        System.out.println("1. " + account.getOwnerName());
-                        System.out.println("2. " + account2.getOwnerName());
-                        System.out.println("3. " + account3.getOwnerName());
-                        int accChoice = scanner.nextInt();
-                        currentAccount = switch (accChoice) {
+                        System.out.println("  1. " + account);
+                        System.out.println("  2. " + account2);
+                        System.out.println("  3. " + account3);
+                        int acc = InputParser.readInt(scanner, "Choose account (1-3): ", 1, 3);
+                        currentAccount = switch (acc) {
                             case 1 -> account;
                             case 2 -> account2;
                             case 3 -> account3;
-                            default -> {
-                                System.out.println("❌ Invalid account. Staying on current account.");
-                                yield currentAccount;
-                            }
+                            default -> currentAccount;
                         };
                     }
                     case 8 -> {

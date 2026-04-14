@@ -21,7 +21,7 @@ public class BankAccount implements Displayable {
     private final String ownerName;
     private double balance;
     private boolean isActive;
-    private String[] transactionHistory;
+    private Transaction[] transactions;
     private int transactionCount;
 
     // --- Constructors (PUBLIC — other packages need to create accounts) ---
@@ -37,7 +37,7 @@ public class BankAccount implements Displayable {
         this.ownerName = ownerName;
         this.balance = initialBalance;
         this.isActive = true;
-        this.transactionHistory = new String[100];
+        this.transactions = new Transaction[100];
         this.transactionCount = 0;
     }
 
@@ -87,10 +87,8 @@ public class BankAccount implements Displayable {
 
     // PRIVATE — internal bookkeeping, no one outside needs to call this
     private void addTransaction(String type, double amount) {
-        if (transactionCount < transactionHistory.length) {
-            String record = String.format("%s: $%.2f | Balance: $%.2f",
-                    type, amount, balance);
-            transactionHistory[transactionCount] = record;
+        if (transactionCount < transactions.length) {
+            transactions[transactionCount] = new Transaction(accountNumber, type, amount, balance);
             transactionCount++;
         }
     }
@@ -103,9 +101,18 @@ public class BankAccount implements Displayable {
         }
         int start = Math.max(0, transactionCount - 5);
         for (int i = start; i < transactionCount; i++) {
-            System.out.println("  " + (i + 1) + ". " + transactionHistory[i]);
+            System.out.println("  " + (i + 1) + ". " + transactions[i]);
         }
     }
+    // 🆕 Get a copy of transactions (we'll improve this with Collections next)
+    public Transaction[] getTransactions() {
+        Transaction[] copy = new Transaction[transactionCount];
+        for (int i = 0; i < transactionCount; i++) {
+            copy[i] = transactions[i];
+        }
+        return copy;
+    }
+
 
     // --- Displayable interface implementation ---
 
@@ -116,6 +123,7 @@ public class BankAccount implements Displayable {
         System.out.println("Account #: " + accountNumber);
         System.out.println("Owner:     " + ownerName);
         System.out.println("Balance:   $" + String.format("%.2f", balance));
+        System.out.println("Transactions:" +transactionCount);
         System.out.println("Active:    " + (isActive ? "Yes ✅" : "No ❌"));
     }
 
