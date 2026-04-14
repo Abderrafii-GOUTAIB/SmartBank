@@ -4,6 +4,8 @@ package org.example.service;
 import org.example.model.BankAccount;
 import org.example.model.Transaction;
 
+import java.util.List;
+
 public class ReceiptGenerator {
 
     // Box-drawing characters for professional receipts
@@ -77,9 +79,9 @@ public class ReceiptGenerator {
         // TRANSACTION HISTORY with String manipulation
         // ================================================
 
-        Transaction[] transactions = account.getTransactions();
+        List<Transaction> transactions = account.getTransactions();
 
-        if (transactions.length > 0) {
+        if (!transactions.isEmpty()) {
             sb.append(divider()).append('\n');
             sb.append(centerText("TRANSACTION HISTORY")).append('\n');
             sb.append(divider()).append('\n');

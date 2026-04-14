@@ -2,6 +2,9 @@ package org.example.model;
 
 import org.example.model.Displayable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class BankAccount implements Displayable {
 
     // ============================================================
@@ -21,7 +24,9 @@ public class BankAccount implements Displayable {
     private final String ownerName;
     private double balance;
     private boolean isActive;
-    private Transaction[] transactions;
+    // 🆕 REPLACED: Transaction[] → ArrayList<Transaction>
+    // No more fixed size! No more manual counting!
+    private  final List<Transaction> transactions;
     private int transactionCount;
 
     // --- Constructors (PUBLIC — other packages need to create accounts) ---
@@ -37,7 +42,7 @@ public class BankAccount implements Displayable {
         this.ownerName = ownerName;
         this.balance = initialBalance;
         this.isActive = true;
-        this.transactions = new Transaction[100];
+        this.transactions = new ArrayList<>();
         this.transactionCount = 0;
     }
 
@@ -87,30 +92,40 @@ public class BankAccount implements Displayable {
 
     // PRIVATE — internal bookkeeping, no one outside needs to call this
     private void addTransaction(String type, double amount) {
-        if (transactionCount < transactions.length) {
-            transactions[transactionCount] = new Transaction(accountNumber, type, amount, balance);
-            transactionCount++;
-        }
+        transactions.add(new Transaction(accountNumber, type, amount, balance));
     }
 
     public void printMiniStatement() {
         System.out.println("--- Mini Statement for " + ownerName + " ---");
-        if (transactionCount == 0) {
+
+        if (transactions.isEmpty()) { // 🆕 .isEmpty() instead of count == 0
             System.out.println("  No transactions yet.");
             return;
         }
-        int start = Math.max(0, transactionCount - 5);
-        for (int i = start; i < transactionCount; i++) {
-            System.out.println("  " + (i + 1) + ". " + transactions[i]);
+
+        // Show last 5 transactions
+        int start = Math.max(0, transactions.size() - 5);
+
+        // 🆕 .subList(from, to) — get a VIEW of part of the list
+        // No need to manually calculate loop indices
+        List<Transaction> recent = transactions.subList(start, transactions.size());
+        int counter = start + 1;
+        for (Transaction txn : recent) {
+            System.out.println("  " + counter + ". " + txn);
+            counter++;
         }
     }
+
     // 🆕 Get a copy of transactions (we'll improve this with Collections next)
-    public Transaction[] getTransactions() {
-        Transaction[] copy = new Transaction[transactionCount];
-        for (int i = 0; i < transactionCount; i++) {
-            copy[i] = transactions[i];
+    public List<Transaction> getTransactions() {
+        return List.copyOf(transactions); // returns an unmodifiable copy of the list
+    }
+
+    public Transaction getLastTransaction(){
+        if(transactions.isEmpty()){
+            return null;
         }
-        return copy;
+        return transactions.get(transactions.size() - 1);
     }
 
 
@@ -123,7 +138,7 @@ public class BankAccount implements Displayable {
         System.out.println("Account #: " + accountNumber);
         System.out.println("Owner:     " + ownerName);
         System.out.println("Balance:   $" + String.format("%.2f", balance));
-        System.out.println("Transactions:" +transactionCount);
+        System.out.println("Transactions:" +transactions.size());
         System.out.println("Active:    " + (isActive ? "Yes ✅" : "No ❌"));
     }
 
@@ -133,7 +148,7 @@ public class BankAccount implements Displayable {
     public String getOwnerName()     { return ownerName; }
     public double getBalance()       { return balance; }
     public boolean isActive()        { return isActive; }
-    public int getTransactionCount() { return transactionCount; }
+    public int getTransactionCount() { return transactions.size(); }
 
     @Override
     public String toString() {
