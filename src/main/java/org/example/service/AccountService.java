@@ -10,9 +10,14 @@ public class AccountService {
     // It CANNOT access private fields like 'balance' directly
 
     public BankAccount createAccount(String ownerName , double balance) {
-        BankAccount account = new BankAccount(ownerName, balance);
-        System.out.println("✅ Account created for " + ownerName);
-        return account;
+        try {
+            BankAccount account = new BankAccount(ownerName, balance);
+            System.out.println("✅ Account created for " + ownerName);
+            return account;
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Failed to create account: " + e.getMessage());
+            return null;
+        }
     }
 
     public BankAccount createAccount( String ownerName){
@@ -22,18 +27,26 @@ public class AccountService {
     public void processDeposit(BankAccount account, double amount) {
         System.out.println();
         System.out.println("Processing deposit for " + account.getOwnerName() + "...");
-        if (account.deposit(amount)) {
+        try {
+            account.deposit(amount);
             System.out.println("✅ Success! New balance: $"
                     + String.format("%.2f", account.getBalance()));
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Deposit failed: " + e.getMessage());
         }
     }
 
     public void processWithdrawal(BankAccount account, double amount) {
         System.out.println();
         System.out.println("Processing withdrawal for " + account.getOwnerName() + "...");
-        if (account.withdraw(amount)) {
+        try {
+            account.withdraw(amount);
             System.out.println("✅ Success! New balance: $"
                     + String.format("%.2f", account.getBalance()));
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Withdrawal failed: " + e.getMessage());
+        } catch (InsufficientFundsException e) {
+            System.out.println("❌ Withdrawal failed: " + e.getMessage());
         }
     }
 

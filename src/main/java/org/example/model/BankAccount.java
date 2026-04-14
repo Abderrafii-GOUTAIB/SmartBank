@@ -65,8 +65,7 @@ public class BankAccount implements Displayable {
 
     public boolean deposit(double amount) {
         if (amount <= 0) {
-            System.out.println("❌ Deposit amount must be positive!");
-            return false;
+            throw new IllegalArgumentException("Deposit amount must be positive.");
         }
         balance += amount;
         addTransaction("DEPOSIT", amount);
@@ -75,13 +74,11 @@ public class BankAccount implements Displayable {
 
     public boolean withdraw(double amount) {
         if (amount <= 0) {
-            System.out.println("❌ Withdrawal amount must be positive!");
-            return false;
+            throw new IllegalArgumentException("Withdrawal amount must be positive.");
         }
         if (amount > balance) {
-            System.out.println("❌ Insufficient funds! Balance: $"
-                    + String.format("%.2f", balance));
-            return false;
+            throw new InsufficientFundsException(amount, balance);
+
         }
         balance -= amount;
         addTransaction("WITHDRAWAL", amount);
