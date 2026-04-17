@@ -1,9 +1,12 @@
 package app;
 
 import org.example.model.BankAccount;
+import org.example.service.AccountCleaner;
 import org.example.service.AccountManager;
 import service.AccountService;
 import service.InputParser;
+
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -52,6 +55,8 @@ public class Main {
                 System.out.println("Current: [none selected]");
             }
 
+
+
             System.out.println("┌───────────────────────────────────────┐");
             System.out.println("│  1. Balance        2. Deposit         │");
             System.out.println("│  3. Withdraw       4. Transfer        │");
@@ -62,12 +67,13 @@ public class Main {
             System.out.println("│ 13. Close Account 14. Flag Account    │");
             System.out.println("│ 15. Unflag Acct   16. Show Flagged    │");
             System.out.println("│ 17. Categories    18. Set Analytics   │");
-            System.out.println("│ 19. Exit                              │");
+            System.out.println("│ 19. Filter Txns   20. Cleanup Demo    │");
+            System.out.println("│ 21. Exit                              │");
             System.out.println("└───────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-19): ", 1, 19);
+            int choice = InputParser.readInt(scanner, "Choose (1-21): ", 1, 21);
 
-            if (currentAccount == null && choice <= 6) {
+            if (currentAccount == null && (choice <= 6  || choice == 19 )) {
                 System.out.println("⚠️  No account selected. Use option 11.");
                 continue;
             }
@@ -87,10 +93,9 @@ public class Main {
                 }
 
                 case 4 -> {
-                    System.out.println("--- Transfer Funds ---");
                     System.out.println("From: " + currentAccount);
-                    accountManager.printAccountList(currentAccount);
-                    System.out.print("Destination account (e.g., ACC-0002): ");
+                    accountManager.printAccountList();
+                    System.out.print("Destination account: ");
                     String toAccNum = scanner.nextLine().trim().toUpperCase();
                     double amount = InputParser.readPositiveDouble(scanner, "Amount: $");
                     accountService.processTransfer(
@@ -103,14 +108,13 @@ public class Main {
 
                 case 8 -> {
                     System.out.print("Search by name: ");
-                    String search = scanner.nextLine();
-                    accountService.searchByName(search);
+                    accountService.searchByName(scanner.nextLine());
                 }
 
                 case 9 -> {
                     System.out.print("Account number: ");
-                    String accNum = scanner.nextLine().trim().toUpperCase();
-                    BankAccount found = accountManager.findByAccountNumber(accNum);
+                    var found = accountManager.findByAccountNumber(
+                            scanner.nextLine().trim().toUpperCase());
                     if (found != null) accountService.printAccountReport(found);
                 }
 
@@ -118,9 +122,8 @@ public class Main {
 
                 case 11 -> {
                     if (!accountManager.hasAccounts()) {
-                        System.out.println("No accounts exist yet.");
+                        System.out.println("No accounts exist.");
                     } else {
-                        System.out.println("--- Select Account ---");
                         accountManager.printAccountList();
                         int acc = InputParser.readInt(scanner,
                                 "Choose (1-" + accountManager.getAccountCount() + "): ",
@@ -129,32 +132,27 @@ public class Main {
                     }
                 }
 
-                // 🆕 Create account with email
                 case 12 -> {
                     System.out.print("Owner name: ");
                     String name = scanner.nextLine();
                     System.out.print("Email: ");
                     String email = scanner.nextLine();
-                    System.out.print("Initial deposit (0 for none): $");
-                    String depositStr = scanner.nextLine();
-                    double deposit = 0;
-                    try {
-                        deposit = Double.parseDouble(depositStr);
-                    } catch (NumberFormatException e) {
-                        System.out.println("Invalid amount, using $0.");
-                    }
+                    System.out.print("Initial deposit: $");
+                    String depStr = scanner.nextLine();
+                    double dep = 0;
+                    try { dep = Double.parseDouble(depStr); }
+                    catch (NumberFormatException e) { System.out.println("Using $0."); }
 
-                    BankAccount newAccount = accountManager.createAccount(name, email, deposit);
-                    if (newAccount != null) {
-                        currentAccount = newAccount;
+                    var newAcc = accountManager.createAccount(name, email, dep);
+                    if (newAcc != null) {
+                        currentAccount = newAcc;
                         System.out.println("Switched to new account.");
                     }
                 }
 
                 case 13 -> {
-                    System.out.println("--- Close Account ---");
                     accountManager.printAccountList();
-                    System.out.print("Account number: ");
+                    System.out.print("Account to close: ");
                     String accNum = scanner.nextLine().trim().toUpperCase();
                     if (accountManager.closeAccount(accNum)) {
                         if (currentAccount != null
@@ -165,7 +163,6 @@ public class Main {
                     }
                 }
 
-                // 🆕 Flag / Unflag / Show flagged
                 case 14 -> {
                     accountManager.printAccountList();
                     System.out.print("Account to flag: ");
@@ -179,33 +176,63 @@ public class Main {
                 }
 
                 case 16 -> accountManager.printFlaggedAccounts();
-
-                // 🆕 Show unique transaction categories (TreeSet sorted)
                 case 17 -> accountManager.printCategories();
 
-                // 🆕 Set operations demo — intersection and difference
                 case 18 -> {
                     System.out.println();
                     System.out.println("--- Set Analytics ---");
+                    var richFlagged = accountManager.getRichFlaggedAccounts(500);
+                    System.out.println("Rich AND flagged (≥$500):");
+                    if (richFlagged.isEmpty()) System.out.println("  (none)");
+                    else richFlagged.forEach(a -> System.out.println("  - " + a));
 
-                    Set<String> richFlagged = accountManager.getRichFlaggedAccounts(1000);
-                    System.out.println("Rich AND flagged (balance ≥ $1000):");
-                    if (richFlagged.isEmpty()) {
-                        System.out.println("  (none)");
-                    } else {
-                        richFlagged.forEach(a -> System.out.println("  - " + a));
-                    }
-
-                    Set<String> richSafe = accountManager.getRichFlaggedAccounts(1000);
+                    var richSafe = accountManager.getUnflaggedRichAccounts(500);
                     System.out.println("Rich but NOT flagged:");
-                    if (richSafe.isEmpty()) {
-                        System.out.println("  (none)");
-                    } else {
-                        richSafe.forEach(a -> System.out.println("  - " + a));
+                    if (richSafe.isEmpty()) System.out.println("  (none)");
+                    else richSafe.forEach(a -> System.out.println("  - " + a));
+                }
+
+                // 🆕 Filter transactions by type using custom iterator
+                case 19 -> {
+                    System.out.println("  1. Show only DEPOSITS");
+                    System.out.println("  2. Show only WITHDRAWALS");
+                    System.out.println("  3. Show ALL");
+                    int filter = InputParser.readInt(scanner, "Choose: ", 1, 3);
+                    switch (filter) {
+                        case 1 -> currentAccount.printTransactionsByType("DEPOSIT");
+                        case 2 -> currentAccount.printTransactionsByType("WITHDRAWAL");
+                        case 3 -> currentAccount.printMiniStatement();
                     }
                 }
 
-                case 19 -> {
+                // 🆕 Cleanup demo — show the bug and three fixes
+                case 20 -> {
+                    System.out.println("=== ITERATOR DEMO ===");
+                    System.out.println("Creating temporary test accounts...");
+
+                    // Create a temporary list to demonstrate on
+                    var tempList = new ArrayList<BankAccount>();
+                    tempList.add(new BankAccount("Test-Rich", "rich@test.com", 5000));
+                    tempList.add(new BankAccount("Test-Poor", "poor@test.com", 0));
+                    tempList.add(new BankAccount("Test-Mid", "mid@test.com", 100));
+                    tempList.add(new BankAccount("Test-Broke", "broke@test.com", 0));
+
+                    System.out.println("Accounts: ");
+                    tempList.forEach(a -> System.out.println("  " + a));
+
+                    // Show the bug first
+                    AccountCleaner.brokenCleanup(tempList);
+
+                    System.out.println();
+                    System.out.println("Now the CORRECT way (removeIf):");
+                    AccountCleaner.cleanupWithRemoveIf(tempList, 1.0);
+
+                    System.out.println();
+                    System.out.println("Remaining: ");
+                    tempList.forEach(a -> System.out.println("  " + a));
+                }
+
+                case 21 -> {
                     System.out.println("Goodbye! 👋");
                     running = false;
                 }

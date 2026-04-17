@@ -1,7 +1,5 @@
 package org.example.model;
 
-import org.example.model.Displayable;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,16 +68,15 @@ public class BankAccount implements Displayable {
 
     // --- PUBLIC methods — the API we expose ---
 
-    public boolean deposit(double amount) {
+    public void deposit(double amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Deposit amount must be positive.");
         }
         balance += amount;
         addTransaction("DEPOSIT", amount);
-        return true;
     }
 
-    public boolean withdraw(double amount) {
+    public void withdraw(double amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("Withdrawal amount must be positive.");
         }
@@ -89,7 +86,6 @@ public class BankAccount implements Displayable {
         }
         balance -= amount;
         addTransaction("WITHDRAWAL", amount);
-        return true;
     }
 
     // PRIVATE — internal bookkeeping, no one outside needs to call this
@@ -130,6 +126,46 @@ public class BankAccount implements Displayable {
         return transactions.get(transactions.size() - 1);
     }
 
+    // Iterate all transactions
+    public TransactionIterator transactionIterator() {
+        return new TransactionIterator(transactions);
+    }
+
+    // Iterate only a specific type
+    public TransactionIterator transactionIterator(String type) {
+        return new TransactionIterator(transactions, type);
+    }
+
+    // 🆕 Calculate total for a specific transaction type using our iterator
+    public double getTotalByType(String type) {
+        double total = 0;
+        TransactionIterator it = transactionIterator(type);
+        while (it.hasNext()) {
+            total += it.next().getAmount();
+        }
+        return total;
+    }
+
+    // 🆕 Print transactions of a specific type using our iterator
+    public void printTransactionsByType(String type) {
+        System.out.println("--- " + type + " transactions for " + ownerName + " ---");
+
+        TransactionIterator it = transactionIterator(type);
+        int count = 0;
+
+        while (it.hasNext()) {
+            System.out.println("  " + it.next());
+            count++;
+        }
+
+        if (count == 0) {
+            System.out.println("  No " + type.toLowerCase() + " transactions.");
+        } else {
+            System.out.println("  Total " + type.toLowerCase() + ": $"
+                    + String.format("%.2f", getTotalByType(type)));
+        }
+    }
+
 
     // --- Displayable interface implementation ---
 
@@ -144,6 +180,7 @@ public class BankAccount implements Displayable {
         System.out.println("Transactions:" +transactions.size());
         System.out.println("Active:    " + (isActive ? "Yes ✅" : "No ❌"));
     }
+
 
     // --- PUBLIC getters — controlled read-only access ---
 
