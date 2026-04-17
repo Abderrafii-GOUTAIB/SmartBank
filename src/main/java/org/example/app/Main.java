@@ -5,6 +5,7 @@ import org.example.service.AccountManager;
 import service.AccountService;
 import service.InputParser;
 import java.util.Scanner;
+import java.util.Set;
 
 public class Main {
 
@@ -20,19 +21,24 @@ public class Main {
 
         // --- Seed some accounts ---
         System.out.println("--- Creating Initial Accounts ---");
-        accountManager.createAccount("Abderrafii", 1000000.75);
-        accountManager.createAccount("Bob Smith", 800.00);
-        accountManager.createAccount("Carol Davis");
+        accountManager.createAccount("Abderrafii", "goutaibabderrafii@gmail.com",1000000.75);
+        accountManager.createAccount("Bob Smith", "bob@smith.com",800.50);
+        accountManager.createAccount("Carol Davis", "carol@davis.com");
         System.out.println();
 
-        // Do some initial transactions
-        BankAccount Abderrafii = accountManager.getAccountByIndex(0);
-        if (Abderrafii != null) {
-            Abderrafii.deposit(500);
-            Abderrafii.withdraw(150.50);
-        }
+        System.out.println("--- Testing Duplicate Email ---");
+        accountManager.createAccount("Abderrafii", "goutaibabderrafii@gmail.com", 100);
+        // Even with a different name, the Set rejects it
+
+        // 🆕 Test case-insensitive duplicate detection
+        accountManager.createAccount("Bob Jr", "BOB@SMITH.COM", 100);
+        // emails are normalized to lowercase, so this is also a duplicate
+
 
         // 🆕 currentAccount is now selected from the dynamic list
+
+        System.out.println();
+
         BankAccount currentAccount = accountManager.getAccountByIndex(0);
         boolean running = true;
 
@@ -40,26 +46,30 @@ public class Main {
             System.out.println();
 
             if (currentAccount != null) {
-                System.out.println("Current: " + currentAccount);
+                String flag = accountManager.isFlagged(currentAccount.getAccountNumber()) ? " 🚩" : "";
+                System.out.println("Current: " + currentAccount + flag);
             } else {
                 System.out.println("Current: [none selected]");
             }
 
-            System.out.println("┌─────────────────────────────────────┐");
-            System.out.println("│ 1.  Balance       2.  Deposit       │");
-            System.out.println("│ 3.  Withdraw      4.  Account Report│");
-            System.out.println("│ 5.  Mini Statement                  │");
-            System.out.println("│ 6.  Bank Summary  7.  Search        │");
-            System.out.println("│ 8.  Switch Acct   9.  New Account   │");
-            System.out.println("│ 10. Close Account 11. Exit          │");
-            System.out.println("└─────────────────────────────────────┘");
+            System.out.println("┌───────────────────────────────────────┐");
+            System.out.println("│  1. Balance        2. Deposit         │");
+            System.out.println("│  3. Withdraw       4. Transfer        │");
+            System.out.println("│  5. Account Report 6. Mini Statement  │");
+            System.out.println("│  7. Bank Summary   8. Search          │");
+            System.out.println("│  9. Find Account  10. Deposit Report  │");
+            System.out.println("│ 11. Switch Acct   12. New Account     │");
+            System.out.println("│ 13. Close Account 14. Flag Account    │");
+            System.out.println("│ 15. Unflag Acct   16. Show Flagged    │");
+            System.out.println("│ 17. Categories    18. Set Analytics   │");
+            System.out.println("│ 19. Exit                              │");
+            System.out.println("└───────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-11): ", 1, 11);
+            int choice = InputParser.readInt(scanner, "Choose (1-19): ", 1, 19);
 
-            // Guard — most options need a selected account
-            if (currentAccount == null && choice <= 5) {
-                System.out.println("⚠️  No account selected. Use option 8 to switch.");
-                continue; // skip back to menu
+            if (currentAccount == null && choice <= 6) {
+                System.out.println("⚠️  No account selected. Use option 11.");
+                continue;
             }
 
             switch (choice) {
@@ -76,20 +86,37 @@ public class Main {
                     accountService.processWithdrawal(currentAccount, amount);
                 }
 
-                case 4 -> accountService.printAccountReport(currentAccount);
+                case 4 -> {
+                    System.out.println("--- Transfer Funds ---");
+                    System.out.println("From: " + currentAccount);
+                    accountManager.printAccountList(currentAccount);
+                    System.out.print("Destination account (e.g., ACC-0002): ");
+                    String toAccNum = scanner.nextLine().trim().toUpperCase();
+                    double amount = InputParser.readPositiveDouble(scanner, "Amount: $");
+                    accountService.processTransfer(
+                            currentAccount.getAccountNumber(), toAccNum, amount);
+                }
 
-                case 5 -> currentAccount.printMiniStatement();
+                case 5 -> accountService.printAccountReport(currentAccount);
+                case 6 -> currentAccount.printMiniStatement();
+                case 7 -> accountService.printSummary();
 
-                case 6 -> accountService.printSummary();
-
-                case 7 -> {
+                case 8 -> {
                     System.out.print("Search by name: ");
                     String search = scanner.nextLine();
                     accountService.searchByName(search);
                 }
 
-                // 🆕 Switch account — now works with ANY number of accounts
-                case 8 -> {
+                case 9 -> {
+                    System.out.print("Account number: ");
+                    String accNum = scanner.nextLine().trim().toUpperCase();
+                    BankAccount found = accountManager.findByAccountNumber(accNum);
+                    if (found != null) accountService.printAccountReport(found);
+                }
+
+                case 10 -> accountManager.printDailyDepositReport();
+
+                case 11 -> {
                     if (!accountManager.hasAccounts()) {
                         System.out.println("No accounts exist yet.");
                     } else {
@@ -102,11 +129,12 @@ public class Main {
                     }
                 }
 
-                // 🆕 Create account at RUNTIME — dynamic list grows
-                case 9 -> {
+                // 🆕 Create account with email
+                case 12 -> {
                     System.out.print("Owner name: ");
                     String name = scanner.nextLine();
-
+                    System.out.print("Email: ");
+                    String email = scanner.nextLine();
                     System.out.print("Initial deposit (0 for none): $");
                     String depositStr = scanner.nextLine();
                     double deposit = 0;
@@ -116,34 +144,68 @@ public class Main {
                         System.out.println("Invalid amount, using $0.");
                     }
 
-                    BankAccount newAccount = accountManager.createAccount(name, deposit);
+                    BankAccount newAccount = accountManager.createAccount(name, email, deposit);
                     if (newAccount != null) {
-                        currentAccount = newAccount; // auto-switch to new account
+                        currentAccount = newAccount;
                         System.out.println("Switched to new account.");
                     }
                 }
 
-                // 🆕 Close account — removes from the list
-                case 10 -> {
+                case 13 -> {
                     System.out.println("--- Close Account ---");
                     accountManager.printAccountList();
-                    System.out.print("Enter account number (e.g., ACC-0001): ");
-                    String accNum = scanner.nextLine().trim();
-
+                    System.out.print("Account number: ");
+                    String accNum = scanner.nextLine().trim().toUpperCase();
                     if (accountManager.closeAccount(accNum)) {
-                        // If we closed the current account, switch away
                         if (currentAccount != null
                                 && currentAccount.getAccountNumber().equals(accNum)) {
                             currentAccount = accountManager.hasAccounts()
-                                    ? accountManager.getAccountByIndex(0)
-                                    : null;
-                            System.out.println("Switched to: "
-                                    + (currentAccount != null ? currentAccount : "[none]"));
+                                    ? accountManager.getAccountByIndex(0) : null;
                         }
                     }
                 }
 
-                case 11 -> {
+                // 🆕 Flag / Unflag / Show flagged
+                case 14 -> {
+                    accountManager.printAccountList();
+                    System.out.print("Account to flag: ");
+                    accountManager.flagAccount(scanner.nextLine().trim().toUpperCase());
+                }
+
+                case 15 -> {
+                    accountManager.printFlaggedAccounts();
+                    System.out.print("Account to unflag: ");
+                    accountManager.unflagAccount(scanner.nextLine().trim().toUpperCase());
+                }
+
+                case 16 -> accountManager.printFlaggedAccounts();
+
+                // 🆕 Show unique transaction categories (TreeSet sorted)
+                case 17 -> accountManager.printCategories();
+
+                // 🆕 Set operations demo — intersection and difference
+                case 18 -> {
+                    System.out.println();
+                    System.out.println("--- Set Analytics ---");
+
+                    Set<String> richFlagged = accountManager.getRichFlaggedAccounts(1000);
+                    System.out.println("Rich AND flagged (balance ≥ $1000):");
+                    if (richFlagged.isEmpty()) {
+                        System.out.println("  (none)");
+                    } else {
+                        richFlagged.forEach(a -> System.out.println("  - " + a));
+                    }
+
+                    Set<String> richSafe = accountManager.getRichFlaggedAccounts(1000);
+                    System.out.println("Rich but NOT flagged:");
+                    if (richSafe.isEmpty()) {
+                        System.out.println("  (none)");
+                    } else {
+                        richSafe.forEach(a -> System.out.println("  - " + a));
+                    }
+                }
+
+                case 19 -> {
                     System.out.println("Goodbye! 👋");
                     running = false;
                 }

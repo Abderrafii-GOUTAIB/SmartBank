@@ -22,6 +22,7 @@ public class BankAccount implements Displayable {
     // Outside code uses getters (controlled access)
     private final String accountNumber;
     private final String ownerName;
+    private final String email;
     private double balance;
     private boolean isActive;
     // 🆕 REPLACED: Transaction[] → ArrayList<Transaction>
@@ -31,7 +32,7 @@ public class BankAccount implements Displayable {
 
     // --- Constructors (PUBLIC — other packages need to create accounts) ---
 
-    public BankAccount(String ownerName, double initialBalance) {
+    public BankAccount(String ownerName,String email, double initialBalance) {
         if (ownerName == null || ownerName.isBlank()) {
             throw new IllegalArgumentException("Owner name cannot be empty.");
         }
@@ -42,16 +43,17 @@ public class BankAccount implements Displayable {
         this.ownerName = ownerName;
         this.balance = initialBalance;
         this.isActive = true;
+        this.email = email;
         this.transactions = new ArrayList<>();
         this.transactionCount = 0;
     }
 
-    public BankAccount(String ownerName) {
-        this(ownerName, 0.0);
+    public BankAccount(String ownerName,String email) {
+        this(ownerName, email,0.0);
     }
 
     public BankAccount(BankAccount other) {
-        this(other.ownerName, 0.0);
+        this(other.ownerName,other.email, 0.0);
     }
 
     // PRIVATE STATIC — internal utility, no one outside needs this
@@ -137,6 +139,7 @@ public class BankAccount implements Displayable {
         System.out.println("Bank:      " + BANK_NAME);
         System.out.println("Account #: " + accountNumber);
         System.out.println("Owner:     " + ownerName);
+        System.out.println("Email:     " + email);
         System.out.println("Balance:   $" + String.format("%.2f", balance));
         System.out.println("Transactions:" +transactions.size());
         System.out.println("Active:    " + (isActive ? "Yes ✅" : "No ❌"));
@@ -149,6 +152,7 @@ public class BankAccount implements Displayable {
     public double getBalance()       { return balance; }
     public boolean isActive()        { return isActive; }
     public int getTransactionCount() { return transactions.size(); }
+    public String getEmail()       { return email; }
 
     @Override
     public String toString() {
