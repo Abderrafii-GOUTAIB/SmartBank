@@ -1,0 +1,100 @@
+┌─────────────────────────────────────────────────────────┐
+│                                                         │
+│  📍 YOU ARE HERE                                        │
+│  SmartBank Project (Steps 1-66)                         │
+│  Pure Java — no frameworks, no libraries                │
+│  This teaches you HOW Java works                        │
+│                                                         │
+│                        │                                │
+│                        ▼                                │
+│                                                         │
+│  🔧 STAGE 2 — The Tooling                              │
+│  Learn the tools every Java developer uses daily        │
+│                                                         │
+│  ├── Maven or Gradle (build tools — pick ONE)           │
+│  ├── Git & GitHub (version control)                     │
+│  ├── IntelliJ IDEA (IDE — stop using notepad)           │
+│  └── Docker basics (containerize your app)              │
+│                                                         │
+│  🎯 Project: Rebuild SmartBank as a Maven project       │
+│     with proper dependency management                   │
+│                                                         │
+│                        │                                │
+│                        ▼                                │
+│                                                         │
+│  🌐 STAGE 3 — Spring Boot (THE framework)              │
+│  This is what 80% of Java jobs require                  │
+│                                                         │
+│  ├── Spring Core (Dependency Injection, IoC)            │
+│  ├── Spring Boot (auto-configuration, starters)         │
+│  ├── Spring MVC (REST APIs — GET, POST, PUT, DELETE)    │
+│  ├── Spring Data JPA (database without raw SQL)         │
+│  ├── Spring Security (authentication, authorization)    │
+│  ├── Spring Validation (input validation)               │
+│  └── Spring Boot Testing                                │
+│                                                         │
+│  🎯 Project: SmartBank REST API                         │
+│     - POST /accounts → create account                   │
+│     - GET /accounts/{id} → find account                 │
+│     - POST /transactions → deposit/withdraw             │
+│     - Real PostgreSQL database                          │
+│     - JWT authentication                                │
+│                                                         │
+│                        │                                │
+│                        ▼                                │
+│                                                         │
+│  🗄️ STAGE 4 — Databases & ORM                          │
+│                                                         │
+│  ├── SQL fundamentals (SELECT, JOIN, GROUP BY)          │
+│  ├── PostgreSQL (the industry standard)                 │
+│  ├── Hibernate / JPA (Object-Relational Mapping)        │
+│  ├── Flyway or Liquibase (database migrations)          │
+│  └── Redis (caching)                                    │
+│                                                         │
+│  🎯 Project: Add real persistence to SmartBank API      │
+│                                                         │
+│                        │                                │
+│                        ▼                                │
+│                                                         │
+│  🧪 STAGE 5 — Testing & Quality                        │
+│                                                         │
+│  ├── JUnit 5 (unit tests — you'll know basics)          │
+│  ├── Mockito (mocking dependencies)                     │
+│  ├── Integration testing (Testcontainers)               │
+│  ├── API testing (MockMvc, RestAssured)                 │
+│  └── Code coverage (JaCoCo)                             │
+│                                                         │
+│  🎯 Project: 80%+ test coverage on SmartBank API       │
+│                                                         │
+│                        │                                │
+│                        ▼                                │
+│                                                         │
+│  📡 STAGE 6 — Microservices & Cloud                     │
+│                                                         │
+│  ├── Microservice architecture                          │
+│  ├── Apache Kafka (event streaming)                     │
+│  ├── RabbitMQ (message queues)                          │
+│  ├── gRPC (service-to-service communication)            │
+│  ├── Docker Compose (multi-container apps)              │
+│  ├── Kubernetes basics                                  │
+│  ├── AWS / GCP / Azure (pick ONE cloud)                 │
+│  └── CI/CD (GitHub Actions or Jenkins)                  │
+│                                                         │
+│  🎯 Project: Split SmartBank into microservices         │
+│     - Account Service                                   │
+│     - Transaction Service                               │
+│     - Notification Service (Kafka events)               │
+│     - API Gateway                                       │
+│                                                         │
+│                        │                                │
+│                        ▼                                │
+│                                                         │
+│  💼 STAGE 7 — Job Ready                                │
+│                                                         │
+│  ├── Build 2-3 portfolio projects on GitHub             │
+│  ├── Practice LeetCode (data structures/algorithms)     │
+│  ├── Study system design (interview essential)          │
+│  ├── Prepare behavioral interview answers               │
+│  └── Apply, interview, land the job                     │
+│                                                         │
+└─────────────────────────────────────────────────────────┘

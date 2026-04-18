@@ -1,8 +1,9 @@
-package service;
+package org.example.service;
 
 import org.example.model.BankAccount;
 import org.example.model.InsufficientFundsException;
 import org.example.model.Transaction;
+import org.example.model.TransactionType;
 import org.example.service.AccountManager;
 import org.example.service.ReceiptGenerator;
 
@@ -20,8 +21,7 @@ public class AccountService {
         try {
             account.deposit(amount);
             accountManager.recordDeposit(account.getOwnerName(), amount);
-            accountManager.recordTransactionCategory("DEPOSIT");
-            // 🆕 getLastTransaction() — no more array indexing
+            accountManager.recordTransactionCategory(TransactionType.DEPOSIT.displayName());
             Transaction lastTxn = account.getLastTransaction();
             if (lastTxn != null) {
                 System.out.println(ReceiptGenerator.generateTransactionReceipt(account, lastTxn));
@@ -29,6 +29,8 @@ public class AccountService {
 
         } catch (IllegalArgumentException e) {
             System.out.println("❌ Deposit failed: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            System.out.println("❌" + e.getMessage());
         }
     }
 
@@ -48,6 +50,8 @@ public class AccountService {
                     + String.format("%.2f", e.getShortfall()));
         } catch (IllegalArgumentException e) {
             System.out.println("❌ Withdrawal failed: " + e.getMessage());
+        } catch (IllegalStateException e) {
+            System.out.println("❌ " + e.getMessage());
         }
     }
 
@@ -65,6 +69,15 @@ public class AccountService {
 
         if(from.getAccountNumber().equals(to.getAccountNumber())) {
             System.out.println("❌ Cannot transfer to the same account.");
+            return;
+        }
+
+        if(from.cannotTransact()) {
+            System.out.println("❌ Transfer failed: Source account is " + from.getStatus().description());
+            return;
+        }
+        if(to.cannotTransact()) {
+            System.out.println("❌ Transfer failed: Destination account is " + to.getStatus().description());
             return;
         }
 

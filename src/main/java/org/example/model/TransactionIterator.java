@@ -8,7 +8,7 @@ import java.util.NoSuchElementException;
 public class TransactionIterator implements Iterator<Transaction> {
 
     private final List<Transaction> transactions;
-    private final String filterType;  // null = all, "DEPOSIT" = only deposits, etc.
+    private final TransactionType filterType;  // null = all, "DEPOSIT" = only deposits, etc.
     private int cursor;               // the bookmark
 
     // Constructor for all transactions
@@ -17,7 +17,7 @@ public class TransactionIterator implements Iterator<Transaction> {
     }
 
     // Constructor with type filter
-    public TransactionIterator(List<Transaction> transactions, String filterType) {
+    public TransactionIterator(List<Transaction> transactions, TransactionType filterType) {
         // Take an immutable copy — protects against external modification
         this.transactions = List.copyOf(transactions);
         this.filterType = filterType;
@@ -35,7 +35,7 @@ public class TransactionIterator implements Iterator<Transaction> {
     // Check if a transaction matches our filter
     private boolean matches(Transaction txn) {
         if (filterType == null) return true; // no filter = everything matches
-        return txn.getType().equalsIgnoreCase(filterType);
+        return txn.getType()==filterType;
     }
 
     @Override

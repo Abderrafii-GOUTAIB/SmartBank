@@ -4,12 +4,12 @@ public class Transaction {
     private static int nextId = 1;
     private final int transactionId;
     private final String accountNumber;
-    private final String type;
+    private final TransactionType type;
     private final double amount;
     private final double balanceAfter;
     private final long timestamp;
 
-    public Transaction( String accountNumber, String type, double amount, double balanceAfter) {
+    public Transaction( String accountNumber, TransactionType type, double amount, double balanceAfter) {
         this.transactionId = nextId++;
         this.accountNumber = accountNumber;
         this.type = type;
@@ -23,17 +23,16 @@ public class Transaction {
         String[] parts = data.split("\\|");
 
         int partitionId = Integer.parseInt(parts[0]);
-        String type = parts[1];
-        double amount = Double.parseDouble(parts[2]);
-        double balanceAfter = Double.parseDouble(parts[3]);
-        Transaction txn = new Transaction( accountNumber, type, amount, balanceAfter);
-        return txn;
+        TransactionType parsedType = TransactionType.fromString(parts[1]);
+        double parsedAmount = Double.parseDouble(parts[2]);
+        double parsedBalance = Double.parseDouble(parts[3]);
+        return new Transaction(accountNumber, parsedType, parsedAmount, parsedBalance);
     }
 
     public String ToDataString() {
         return String.join("|",
                 String.valueOf(transactionId),
-                type,
+                type.name(),
                 String.valueOf(amount),
                 String.valueOf(balanceAfter)
         );
@@ -57,7 +56,8 @@ public class Transaction {
     // --- Standard getters ---
 
     public String getAccountNumber() { return accountNumber; }
-    public String getType()          { return type; }
+    public TransactionType getType()          { return type; }
+    public String getTypeName() { return type.displayName(); }
     public double getAmount()        { return amount; }
     public double getBalanceAfter()  { return balanceAfter; }
     public long getTimestamp()       { return timestamp; }

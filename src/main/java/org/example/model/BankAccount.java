@@ -22,15 +22,15 @@ public class BankAccount implements Displayable {
     private final String ownerName;
     private final String email;
     private double balance;
-    private boolean isActive;
+    private AccountStatus status;
     // 🆕 REPLACED: Transaction[] → ArrayList<Transaction>
     // No more fixed size! No more manual counting!
-    private  final List<Transaction> transactions;
+    private final List<Transaction> transactions;
     private int transactionCount;
 
     // --- Constructors (PUBLIC — other packages need to create accounts) ---
 
-    public BankAccount(String ownerName,String email, double initialBalance) {
+    public BankAccount(String ownerName, String email, double initialBalance) {
         if (ownerName == null || ownerName.isBlank()) {
             throw new IllegalArgumentException("Owner name cannot be empty.");
         }
@@ -40,18 +40,18 @@ public class BankAccount implements Displayable {
         this.accountNumber = generateAccountNumber();
         this.ownerName = ownerName;
         this.balance = initialBalance;
-        this.isActive = true;
+        this.status = AccountStatus.ACTIVE;
         this.email = email;
         this.transactions = new ArrayList<>();
         this.transactionCount = 0;
     }
 
-    public BankAccount(String ownerName,String email) {
-        this(ownerName, email,0.0);
+    public BankAccount(String ownerName, String email) {
+        this(ownerName, email, 0.0);
     }
 
     public BankAccount(BankAccount other) {
-        this(other.ownerName,other.email, 0.0);
+        this(other.ownerName, other.email, 0.0);
     }
 
     // PRIVATE STATIC — internal utility, no one outside needs this
@@ -72,8 +72,12 @@ public class BankAccount implements Displayable {
         if (amount <= 0) {
             throw new IllegalArgumentException("Deposit amount must be positive.");
         }
+        if (status.cannotTransact()) {
+            throw new IllegalStateException("Cannot deposit, account is : " + status.description());
+        }
         balance += amount;
-        addTransaction("DEPOSIT", amount);
+        addTransaction(TransactionType.DEPOSIT, amount);
+
     }
 
     public void withdraw(double amount) {
@@ -82,15 +86,40 @@ public class BankAccount implements Displayable {
         }
         if (amount > balance) {
             throw new InsufficientFundsException(amount, balance);
-
+        }
+        if (status.cannotTransact()) {
+            throw new IllegalStateException("Cannot withdraw, account is : " + status.description());
         }
         balance -= amount;
-        addTransaction("WITHDRAWAL", amount);
+        addTransaction(TransactionType.WITHDRAWAL, amount);
     }
 
     // PRIVATE — internal bookkeeping, no one outside needs to call this
-    private void addTransaction(String type, double amount) {
+    private void addTransaction(TransactionType type, double amount) {
         transactions.add(new Transaction(accountNumber, type, amount, balance));
+    }
+
+    public void changeStatus(AccountStatus newStatus) {
+        if (!status.canTransitionTo(newStatus)) {
+            throw new IllegalStateException("Cannot change status from " + status
+                    + " to " + newStatus);
+        }
+        AccountStatus oldStatus = status;
+        this.status = newStatus;
+        System.out.println("  " + accountNumber + ": "
+                + oldStatus.icon() + " " + oldStatus
+                + " → " + newStatus.icon() + " " + newStatus);
+    }
+    public void freeze() {
+        changeStatus(AccountStatus.FROZEN);
+    }
+
+    public void activate() {
+        changeStatus(AccountStatus.ACTIVE);
+    }
+
+    public void close() {
+        changeStatus(AccountStatus.CLOSED);
     }
 
     public void printMiniStatement() {
@@ -119,8 +148,8 @@ public class BankAccount implements Displayable {
         return List.copyOf(transactions); // returns an unmodifiable copy of the list
     }
 
-    public Transaction getLastTransaction(){
-        if(transactions.isEmpty()){
+    public Transaction getLastTransaction() {
+        if (transactions.isEmpty()) {
             return null;
         }
         return transactions.get(transactions.size() - 1);
@@ -132,12 +161,12 @@ public class BankAccount implements Displayable {
     }
 
     // Iterate only a specific type
-    public TransactionIterator transactionIterator(String type) {
+    public TransactionIterator transactionIterator(TransactionType type) {
         return new TransactionIterator(transactions, type);
     }
 
     // 🆕 Calculate total for a specific transaction type using our iterator
-    public double getTotalByType(String type) {
+    public double getTotalByType(TransactionType type) {
         double total = 0;
         TransactionIterator it = transactionIterator(type);
         while (it.hasNext()) {
@@ -147,7 +176,7 @@ public class BankAccount implements Displayable {
     }
 
     // 🆕 Print transactions of a specific type using our iterator
-    public void printTransactionsByType(String type) {
+    public void printTransactionsByType(TransactionType type) {
         System.out.println("--- " + type + " transactions for " + ownerName + " ---");
 
         TransactionIterator it = transactionIterator(type);
@@ -159,9 +188,9 @@ public class BankAccount implements Displayable {
         }
 
         if (count == 0) {
-            System.out.println("  No " + type.toLowerCase() + " transactions.");
+            System.out.println("  No " + type.displayName().toLowerCase() + " transactions.");
         } else {
-            System.out.println("  Total " + type.toLowerCase() + ": $"
+            System.out.println("  Total " + type.displayName().toLowerCase() + ": $"
                     + String.format("%.2f", getTotalByType(type)));
         }
     }
@@ -177,22 +206,42 @@ public class BankAccount implements Displayable {
         System.out.println("Owner:     " + ownerName);
         System.out.println("Email:     " + email);
         System.out.println("Balance:   $" + String.format("%.2f", balance));
-        System.out.println("Transactions:" +transactions.size());
-        System.out.println("Active:    " + (isActive ? "Yes ✅" : "No ❌"));
+        System.out.println("Transactions:" + transactions.size());
+        System.out.println("Status: " + status.icon() + " " + status.description());
     }
 
 
     // --- PUBLIC getters — controlled read-only access ---
 
-    public String getAccountNumber() { return accountNumber; }
-    public String getOwnerName()     { return ownerName; }
-    public double getBalance()       { return balance; }
-    public boolean isActive()        { return isActive; }
-    public int getTransactionCount() { return transactions.size(); }
-    public String getEmail()       { return email; }
+    public String getAccountNumber() {
+        return accountNumber;
+    }
+
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public double getBalance() {
+        return balance;
+    }
+    public AccountStatus getStatus() {
+        return status;
+    }
+
+    public boolean cannotTransact() {
+        return status.cannotTransact();
+    }
+
+    public int getTransactionCount() {
+        return transactions.size();
+    }
+
+    public String getEmail() {
+        return email;
+    }
 
     @Override
     public String toString() {
-        return String.format("[%s] %s — $%.2f", accountNumber, ownerName, balance);
+        return String.format("[%s] %s — $%.2f %s", accountNumber, ownerName, balance,status.icon());
     }
 }
