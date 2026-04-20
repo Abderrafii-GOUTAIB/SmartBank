@@ -1,6 +1,6 @@
 package org.example.model;
 
-public class Transaction {
+public class Transaction implements Comparable<Transaction> {
     private static int nextId = 1;
     private final int transactionId;
     private final String accountNumber;
@@ -16,6 +16,10 @@ public class Transaction {
         this.amount = amount;
         this.balanceAfter = balanceAfter;
         this.timestamp = System.currentTimeMillis();
+    }
+    @Override
+    public int compareTo(Transaction other) {
+        return Integer.compare(this.transactionId, other.transactionId);
     }
 
     public static Transaction fromString(String data, String accountNumber) {

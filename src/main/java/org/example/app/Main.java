@@ -4,6 +4,7 @@ import org.example.model.AccountStatus;
 import org.example.model.BankAccount;
 import org.example.model.TransactionType;
 import org.example.service.AccountCleaner;
+import org.example.service.AccountComparators;
 import org.example.service.AccountManager;
 import org.example.service.AccountService;
 import service.InputParser;
@@ -57,23 +58,23 @@ public class Main {
                 System.out.println("Current: [none selected]");
             }
 
-            System.out.println("┌────────────────────────────────────────────────┐");
-            System.out.println("│  1. Balance              2. Deposit            │");
-            System.out.println("│  3. Withdraw             4. Transfer           │");
-            System.out.println("│  5. Account Report       6. Mini Statement     │");
-            System.out.println("│  7. Bank Summary         8. Search             │");
-            System.out.println("│  9. Find Account         10. Deposit Report    │");
-            System.out.println("│ 11. Switch Acct          12. New Account       │");
-            System.out.println("│ 13. Close Account        14. Flag Account      │");
-            System.out.println("│ 15. Unflag Acct          16. Show Flagged      │");
-            System.out.println("│ 17. Categories           18. Set Analytics     │");
-            System.out.println("│ 19. Filter By transition 20. Cleanup Demo      │");
-            System.out.println("│ 21. Freeze/Activate      22. Account Status    │");
-            System.out.println("│ 23. Exit                                       │");
-            System.out.println("└────────────────────────────────────────────────┘");
+            System.out.println("┌──────────────────────────────────────────┐");
+            System.out.println("│  1. Balance          2. Deposit          │");
+            System.out.println("│  3. Withdraw         4. Transfer         │");
+            System.out.println("│  5. Account Report   6. Mini Statement   │");
+            System.out.println("│  7. Bank Summary     8. Search           │");
+            System.out.println("│  9. Find Account     10. Deposit Report  │");
+            System.out.println("│ 11. Switch Acct      12. New Account     │");
+            System.out.println("│ 13. Close Account    14. Flag Account    │");
+            System.out.println("│ 15. Unflag Acct      16. Show Flagged    │");
+            System.out.println("│ 17. Categories       18. Set Analytics   │");
+            System.out.println("│ 19. Filter Txns      20. Cleanup Demo    │");
+            System.out.println("│ 21. Freeze/Activate  22. Account status  │");
+            System.out.println("│ 23. Sort Accounts    24. Leaderboard     │");
+            System.out.println("│ 24. Exit                                 │");
+            System.out.println("└──────────────────────────────────────────┘");
 
-
-            int choice = InputParser.readInt(scanner, "Choose (1-22): ", 1, 22);
+            int choice = InputParser.readInt(scanner, "Choose (1-24): ", 1, 24);
 
             if (currentAccount == null && (choice >= 0)) {
                 System.out.println("⚠️  No account selected. Use option 11.");
@@ -283,7 +284,57 @@ public class Main {
                     System.out.println("Can perform transactions: " + (status.cannotTransact() ? "No" : "Yes"));
                     System.out.println("Is terminal state: " + (status.isTerminal() ? "Yes" : "No"));
                 }
+                // 🆕 Sort accounts — multiple Comparator strategies
                 case 23 -> {
+                    System.out.println();
+                    System.out.println("--- Sort Accounts ---");
+                    System.out.println("  1. By name (A → Z)");
+                    System.out.println("  2. By name (Z → A)");
+                    System.out.println("  3. By balance (lowest first)");
+                    System.out.println("  4. By balance (highest first)");
+                    System.out.println("  5. By most active (most transactions)");
+                    System.out.println("  6. By account number");
+                    System.out.println("  7. By status");
+                    System.out.println("  8. By status, then balance");
+
+                    int sortChoice = InputParser.readInt(scanner, "Sort by: ", 1, 8);
+
+                    // 🆕 Select the right Comparator based on user choice
+                    var comparator = switch (sortChoice) {
+                        case 1 -> AccountComparators.BY_NAME;
+                        case 2 -> AccountComparators.BY_NAME_DESC;
+                        case 3 -> AccountComparators.BY_BALANCE;
+                        case 4 -> AccountComparators.BY_BALANCE_DESC;
+                        case 5 -> AccountComparators.BY_ACTIVITY;
+                        case 7 -> AccountComparators.BY_STATUS;
+                        case 8 -> AccountComparators.BY_STATUS_THEN_BALANCE;
+                        default -> AccountComparators.BY_ACCOUNT_NUMBER;
+                    };
+
+                    accountManager.printAccountsSorted(comparator);
+                }
+
+                // 🆕 Leaderboard — top accounts by balance
+                case 24 -> {
+                    accountManager.printLeaderboard(5);
+
+                    System.out.println();
+                    // 🆕 Show min/max using Collections.min/max with Comparator
+                    var richest = accountManager.getRichestAccount();
+                    var poorest = accountManager.getPoorestAccount();
+                    var busiest = accountManager.getMostActiveAccount();
+
+                    if (richest != null) {
+                        System.out.println("  💰 Richest:     " + richest.getOwnerName()
+                                + " ($" + String.format("%,.2f", richest.getBalance()) + ")");
+                        System.out.println("  📉 Lowest:      " + poorest.getOwnerName()
+                                + " ($" + String.format("%,.2f", poorest.getBalance()) + ")");
+                        System.out.println("  ⚡ Most active:  " + busiest.getOwnerName()
+                                + " (" + busiest.getTransactionCount() + " transactions)");
+                    }
+                }
+
+                case 25 -> {
                     System.out.println("Goodbye! 👋");
                     running = false;
                 }

@@ -1,7 +1,5 @@
 package org.example.service;
-
 import org.example.model.BankAccount;
-
 import java.util.*;
 
 public class AccountManager {
@@ -9,7 +7,7 @@ public class AccountManager {
     private final Map<String, BankAccount> accountMap; // 🆕 for fast lookup by account number
     private final Map<String, Double> dailyDeposits;
 
-    private final Set<String>  registredEmails; // 🆕 track registered emails for uniqueness
+    private final Set<String> registeredEmails; // 🆕 track registered emails for uniqueness
     private final Set<String> transactionCategories;
     private final Set<String> flaggedAccounts;
 
@@ -20,7 +18,7 @@ public class AccountManager {
         this.dailyDeposits = new HashMap<>();
         this.accountMap = new HashMap<>();
 
-        this.registredEmails = new HashSet<>();
+        this.registeredEmails = new HashSet<>();
         this.transactionCategories = new TreeSet<>();
         this.flaggedAccounts = new LinkedHashSet<>();
     }
@@ -29,7 +27,7 @@ public class AccountManager {
         try {
             String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
 
-            if(registredEmails.contains(normalizedEmail)){
+            if(registeredEmails.contains(normalizedEmail)){
                 throw new IllegalArgumentException("Email already registered");
             }
 
@@ -38,7 +36,7 @@ public class AccountManager {
             accountMap.put(account.getAccountNumber(), account);
             dailyDeposits.put(account.getOwnerName(), initialBalance);
 
-            registredEmails.add(account.getEmail());
+            registeredEmails.add(account.getEmail());
             System.out.println("📋 Created: " + account);
             return account;
         } catch (IllegalArgumentException e) {
@@ -47,8 +45,8 @@ public class AccountManager {
         }
     }
 
-    public BankAccount createAccount(String ownerName, String email) {
-        return createAccount(ownerName, email,0.0);
+    public void createAccount(String ownerName, String email) {
+        createAccount(ownerName, email, 0.0);
     }
     public void recordTransactionCategory( String category) {
             transactionCategories.add(category);
@@ -249,7 +247,7 @@ public class AccountManager {
         accountList.remove(account);
         accountMap.remove(accountNumber);
         dailyDeposits.remove(account.getOwnerName());
-        registredEmails.remove(account.getEmail());
+        registeredEmails.remove(account.getEmail());
         flaggedAccounts.remove(accountNumber);
 
         System.out.println("🗑️  Account " + accountNumber + " closed.");
@@ -318,6 +316,80 @@ public class AccountManager {
         // .entrySet() — returns all entries
         for (Map.Entry<String, BankAccount> entry : accountMap.entrySet()) {
             System.out.println("  " + entry.getKey() + " → " + entry.getValue());
+        }
+    }
+
+    public List<BankAccount> getAccountsSorted(Comparator<BankAccount> comparator) {
+        List<BankAccount> sortedAccounts = new ArrayList<>(accountList);
+        sortedAccounts.sort(comparator);
+        return sortedAccounts;
+    }
+
+    public void printAccountsSorted(Comparator<BankAccount> comparator) {
+        List<BankAccount> sortedAccounts = getAccountsSorted(comparator);
+        System.out.println();
+        System.out.println("--- Accounts sorted by: "
+                + AccountComparators.describe(comparator) + " ---");
+
+        if (sortedAccounts.isEmpty()) {
+            System.out.println("  No accounts.");
+            return;
+        }
+        for (BankAccount account : sortedAccounts) {
+            String flag = flaggedAccounts.contains(account.getAccountNumber()) ? " 🚩" : "";
+            System.out.printf(" %s %s — $%,.2f — %s %s%s%n",
+                    account.getAccountNumber(),
+                    account.getOwnerName(),
+                    account.getBalance(),
+                    account.getStatus().icon(),
+                    account.getStatus(),
+                    flag);
+
+        }
+    }
+    public BankAccount getRichestAccount(){
+        if (accountList.isEmpty()) {
+            System.out.println("  No accounts to evaluate.");
+            return null;
+        }
+        return Collections.max(accountList,AccountComparators.BY_BALANCE);
+    }
+    public BankAccount getPoorestAccount(){
+        if (accountList.isEmpty()) {
+            System.out.println("  No accounts to evaluate.");
+        }
+        return Collections.min(accountList,AccountComparators.BY_BALANCE);
+    }
+    public BankAccount getMostActiveAccount(){
+        if (accountList.isEmpty()) {
+            System.out.println("  No accounts to evaluate.");
+        }
+        return Collections.max(accountList,AccountComparators.BY_ACTIVITY);
+    }
+    public void printLeaderboard(int topN) {
+        List<BankAccount> sorted = getAccountsSorted(AccountComparators.BY_BALANCE_DESC);
+
+        System.out.println();
+        System.out.println("--- 🏆 Top " + Math.min(topN, sorted.size()) + " Accounts by Balance ---");
+
+        int limit = Math.min(topN, sorted.size());
+        for (int i = 0; i < limit; i++) {
+            BankAccount acc = sorted.get(i);
+
+            // Medal emoji for top 3
+            String medal = switch (i) {
+                case 0 -> "🥇";
+                case 1 -> "🥈";
+                case 2 -> "🥉";
+                default -> "  ";
+            };
+
+            System.out.printf("  %s %d. %-20s $%,.2f  (%d txns)%n",
+                    medal,
+                    i + 1,
+                    acc.getOwnerName(),
+                    acc.getBalance(),
+                    acc.getTransactionCount());
         }
     }
 }
