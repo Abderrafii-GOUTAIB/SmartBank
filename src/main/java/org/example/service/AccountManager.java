@@ -1,5 +1,8 @@
 package org.example.service;
+
 import org.example.model.BankAccount;
+
+import java.io.IOException;
 import java.util.*;
 
 public class AccountManager {
@@ -12,7 +15,6 @@ public class AccountManager {
     private final Set<String> flaggedAccounts;
 
 
-
     public AccountManager() {
         this.accountList = new ArrayList<>();
         this.dailyDeposits = new HashMap<>();
@@ -23,15 +25,15 @@ public class AccountManager {
         this.flaggedAccounts = new LinkedHashSet<>();
     }
 
-    public BankAccount createAccount(String ownerName,String email, double initialBalance) {
+    public BankAccount createAccount(String ownerName, String email, double initialBalance) {
         try {
             String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
 
-            if(registeredEmails.contains(normalizedEmail)){
+            if (registeredEmails.contains(normalizedEmail)) {
                 throw new IllegalArgumentException("Email already registered");
             }
 
-            BankAccount account = new BankAccount(ownerName,normalizedEmail ,initialBalance);
+            BankAccount account = new BankAccount(ownerName, normalizedEmail, initialBalance);
             accountList.add(account); // 🆕 add to dynamic list
             accountMap.put(account.getAccountNumber(), account);
             dailyDeposits.put(account.getOwnerName(), initialBalance);
@@ -40,7 +42,7 @@ public class AccountManager {
             System.out.println("📋 Created: " + account);
             return account;
         } catch (IllegalArgumentException e) {
-            System.out.println("❌ Cannot create account: " +  email + " :" + e.getMessage());
+            System.out.println("❌ Cannot create account: " + email + " :" + e.getMessage());
             return null;
         }
     }
@@ -48,8 +50,9 @@ public class AccountManager {
     public void createAccount(String ownerName, String email) {
         createAccount(ownerName, email, 0.0);
     }
-    public void recordTransactionCategory( String category) {
-            transactionCategories.add(category);
+
+    public void recordTransactionCategory(String category) {
+        transactionCategories.add(category);
     }
 
     public Set<String> getUniqueCategories() {
@@ -94,7 +97,7 @@ public class AccountManager {
         boolean removed = flaggedAccounts.remove(accountNumber);
         if (removed) {
             System.out.print("✅ Unflagged: " + accountNumber);
-        }else {
+        } else {
             System.out.println("ℹ️  " + accountNumber + " was not flagged.");
         }
 
@@ -125,7 +128,7 @@ public class AccountManager {
     private Set<String> getRichAccounts(double minBalance) {
         Set<String> richAccounts = new HashSet<>();
         for (BankAccount account : accountList) {
-            if(account.getBalance() >= minBalance) {
+            if (account.getBalance() >= minBalance) {
                 richAccounts.add(account.getOwnerName());
             }
         }
@@ -151,12 +154,11 @@ public class AccountManager {
 
 
         BankAccount account = accountMap.get(accountNumber);
-        if(account == null) {
+        if (account == null) {
             System.out.println("❌ Account not found: " + accountNumber);
         }
         return account;
     }
-
 
 
     public Boolean accountExists(String accountNumber) {
@@ -240,7 +242,7 @@ public class AccountManager {
             System.out.println("❌ Account not found: " + accountNumber);
             return false;
         }
-        if(account.getBalance() <= 0) {
+        if (account.getBalance() <= 0) {
             System.out.println("❌ Cannot close account with non-positive balance: $" + String.format("%.2f", account.getBalance()));
             return false;
         }
@@ -347,25 +349,29 @@ public class AccountManager {
 
         }
     }
-    public BankAccount getRichestAccount(){
+
+    public BankAccount getRichestAccount() {
         if (accountList.isEmpty()) {
             System.out.println("  No accounts to evaluate.");
             return null;
         }
-        return Collections.max(accountList,AccountComparators.BY_BALANCE);
+        return Collections.max(accountList, AccountComparators.BY_BALANCE);
     }
-    public BankAccount getPoorestAccount(){
+
+    public BankAccount getPoorestAccount() {
         if (accountList.isEmpty()) {
             System.out.println("  No accounts to evaluate.");
         }
-        return Collections.min(accountList,AccountComparators.BY_BALANCE);
+        return Collections.min(accountList, AccountComparators.BY_BALANCE);
     }
-    public BankAccount getMostActiveAccount(){
+
+    public BankAccount getMostActiveAccount() {
         if (accountList.isEmpty()) {
             System.out.println("  No accounts to evaluate.");
         }
-        return Collections.max(accountList,AccountComparators.BY_ACTIVITY);
+        return Collections.max(accountList, AccountComparators.BY_ACTIVITY);
     }
+
     public void printLeaderboard(int topN) {
         List<BankAccount> sorted = getAccountsSorted(AccountComparators.BY_BALANCE_DESC);
 
@@ -390,6 +396,65 @@ public class AccountManager {
                     acc.getOwnerName(),
                     acc.getBalance(),
                     acc.getTransactionCount());
+        }
+    }
+
+    public Set<String> getFlaggedAccounts() {
+        return Set.copyOf(flaggedAccounts);
+    }
+
+    public void saveToFiles() {
+        try {
+            DataStore.saveAccounts(getAllAccounts());
+            DataStore.saveTransactions(getAllAccounts());
+            DataStore.saveFlagged(getFlaggedAccounts());
+            DataStore.appendLog("Bank data saved. Accounts: " + getAccountCount());
+            System.out.println("✅ All data saved successfully.");
+        } catch (IOException e) {
+            System.out.println("❌ Error saving: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean loadFromFiles() {
+        try {
+            List<BankAccount> loaded = DataStore.loadAccounts();
+
+            if (loaded.isEmpty()) {
+                return false; // no data to load
+            }
+
+            // Clear existing data
+            accountList.clear();
+            accountMap.clear();
+            registeredEmails.clear();
+            dailyDeposits.clear();
+            flaggedAccounts.clear();
+
+            // Rebuild all data structures from loaded accounts
+            for (BankAccount acc : loaded) {
+                accountList.add(acc);
+                accountMap.put(acc.getAccountNumber(), acc);
+                if (acc.getEmail() != null && !acc.getEmail().isBlank()) {
+                    registeredEmails.add(acc.getEmail());
+                }
+                dailyDeposits.put(acc.getAccountNumber(), 0.0);
+            }
+
+            // Load flagged accounts
+            Set<String> loadedFlags = DataStore.loadFlagged();
+            for (String flag : loadedFlags) {
+                if (accountMap.containsKey(flag)) {
+                    flaggedAccounts.add(flag);
+                }
+            }
+
+            DataStore.appendLog("Bank data loaded. Accounts: " + getAccountCount());
+            return true;
+
+        } catch (IOException e) {
+            System.out.println("❌ Error loading: " + e.getMessage());
+            return false;
         }
     }
 }

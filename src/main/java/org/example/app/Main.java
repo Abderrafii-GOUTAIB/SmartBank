@@ -3,10 +3,7 @@ package org.example.app;
 import org.example.model.AccountStatus;
 import org.example.model.BankAccount;
 import org.example.model.TransactionType;
-import org.example.service.AccountCleaner;
-import org.example.service.AccountComparators;
-import org.example.service.AccountManager;
-import org.example.service.AccountService;
+import org.example.service.*;
 import service.InputParser;
 
 import java.util.ArrayList;
@@ -25,25 +22,17 @@ public class Main {
         System.out.println("=== " + BankAccount.BANK_NAME + " ===");
         System.out.println();
 
-        // --- Seed some accounts ---
-        System.out.println("--- Creating Initial Accounts ---");
-        accountManager.createAccount("Abderrafii", "goutaibabderrafii@gmail.com", 1000000.75);
-        accountManager.createAccount("Bob Smith", "bob@smith.com", 800.50);
-        accountManager.createAccount("Carol Davis", "carol@davis.com");
-        System.out.println();
+        // 🆕 FILE I/O: Try to load saved data first
+        boolean loaded = accountManager.loadFromFiles();
 
-        System.out.println("--- Testing Duplicate Email ---");
-        accountManager.createAccount("Abderrafii", "goutaibabderrafii@gmail.com", 100);
-        // Even with a different name, the Set rejects it
-
-        // 🆕 Test case-insensitive duplicate detection
-        accountManager.createAccount("Bob Jr", "BOB@SMITH.COM", 100);
-        // emails are normalized to lowercase, so this is also a duplicate
-
-
-        // 🆕 currentAccount is now selected from the dynamic list
-
-        System.out.println();
+        if (!loaded) {
+            // No saved data — create default accounts
+            System.out.println("--- Creating Initial Accounts ---");
+            accountManager.createAccount("Abderrafii", "goutaibabderrafii@gmail.com", 1000000.75);
+            accountManager.createAccount("Bob Smith", "bob@smith.com", 800.50);
+            accountManager.createAccount("Carol Davis", "carol@davis.com");
+            System.out.println();
+        }
 
         BankAccount currentAccount = accountManager.getAccountByIndex(0);
         boolean running = true;
@@ -71,10 +60,11 @@ public class Main {
             System.out.println("│ 19. Filter Txns      20. Cleanup Demo    │");
             System.out.println("│ 21. Freeze/Activate  22. Account status  │");
             System.out.println("│ 23. Sort Accounts    24. Leaderboard     │");
-            System.out.println("│ 24. Exit                                 │");
+            System.out.println("│ 25. Save Data        26.File info        │");
+            System.out.println("│ 27. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-24): ", 1, 24);
+            int choice = InputParser.readInt(scanner, "Choose (1-27): ", 1, 27);
 
             if (currentAccount == null && (choice >= 0)) {
                 System.out.println("⚠️  No account selected. Use option 11.");
@@ -85,17 +75,14 @@ public class Main {
             switch (choice) {
                 case 1 -> System.out.println("💰 Balance: $"
                         + String.format("%.2f", currentAccount.getBalance()));
-
                 case 2 -> {
                     double amount = InputParser.readPositiveDouble(scanner, "Deposit amount: $");
                     accountService.processDeposit(currentAccount, amount);
                 }
-
                 case 3 -> {
                     double amount = InputParser.readPositiveDouble(scanner, "Withdrawal amount: $");
                     accountService.processWithdrawal(currentAccount, amount);
                 }
-
                 case 4 -> {
                     System.out.println("From: " + currentAccount);
                     accountManager.printAccountList();
@@ -105,25 +92,20 @@ public class Main {
                     accountService.processTransfer(
                             currentAccount.getAccountNumber(), toAccNum, amount);
                 }
-
                 case 5 -> accountService.printAccountReport(currentAccount);
                 case 6 -> currentAccount.printMiniStatement();
                 case 7 -> accountService.printSummary();
-
                 case 8 -> {
                     System.out.print("Search by name: ");
                     accountService.searchByName(scanner.nextLine());
                 }
-
                 case 9 -> {
                     System.out.print("Account number: ");
                     var found = accountManager.findByAccountNumber(
                             scanner.nextLine().trim().toUpperCase());
                     if (found != null) accountService.printAccountReport(found);
                 }
-
                 case 10 -> accountManager.printDailyDepositReport();
-
                 case 11 -> {
                     if (!accountManager.hasAccounts()) {
                         System.out.println("No accounts exist.");
@@ -135,7 +117,6 @@ public class Main {
                         currentAccount = accountManager.getAccountByIndex(acc - 1);
                     }
                 }
-
                 case 12 -> {
                     System.out.print("Owner name: ");
                     String name = scanner.nextLine();
@@ -149,14 +130,12 @@ public class Main {
                     } catch (NumberFormatException e) {
                         System.out.println("Using $0.");
                     }
-
                     var newAcc = accountManager.createAccount(name, email, dep);
                     if (newAcc != null) {
                         currentAccount = newAcc;
                         System.out.println("Switched to new account.");
                     }
                 }
-
                 case 13 -> {
                     accountManager.printAccountList();
                     System.out.print("Account to close: ");
@@ -168,22 +147,18 @@ public class Main {
                         }
                     }
                 }
-
                 case 14 -> {
                     accountManager.printAccountList();
                     System.out.print("Account to flag: ");
                     accountManager.flagAccount(scanner.nextLine().trim().toUpperCase());
                 }
-
                 case 15 -> {
                     accountManager.printFlaggedAccounts();
                     System.out.print("Account to unflag: ");
                     accountManager.unflagAccount(scanner.nextLine().trim().toUpperCase());
                 }
-
                 case 16 -> accountManager.printFlaggedAccounts();
                 case 17 -> accountManager.printCategories();
-
                 case 18 -> {
                     System.out.println();
                     System.out.println("--- Set Analytics ---");
@@ -197,7 +172,6 @@ public class Main {
                     if (richSafe.isEmpty()) System.out.println("  (none)");
                     else richSafe.forEach(a -> System.out.println("  - " + a));
                 }
-
                 // 🆕 Filter transactions by type using custom iterator
                 case 19 -> {
                     System.out.println("  Filter by transaction type:");
@@ -214,7 +188,6 @@ public class Main {
                         currentAccount.printMiniStatement();
                     }
                 }
-
                 // 🆕 Cleanup demo — show the bug and three fixes
                 case 20 -> {
                     System.out.println("=== ITERATOR DEMO ===");
@@ -241,9 +214,7 @@ public class Main {
                     System.out.println("Remaining: ");
                     tempList.forEach(a -> System.out.println("  " + a));
                 }
-
                 case 21 -> {
-
                     System.out.println("  Current status: "
                             + currentAccount.getStatus().icon() + " "
                             + currentAccount.getStatus().description());
@@ -333,8 +304,17 @@ public class Main {
                                 + " (" + busiest.getTransactionCount() + " transactions)");
                     }
                 }
-
-                case 25 -> {
+                case 25 -> accountManager.saveToFiles();
+                // 🆕 Show file info
+                case 26 -> DataStore.printFileInfo();
+                // 🆕 Exit — auto-save before quitting
+                case 27 -> {
+                    System.out.println();
+                    System.out.print("Save before exiting? (y/n): ");
+                    String answer = scanner.nextLine().trim().toLowerCase();
+                    if (answer.startsWith("y")) {
+                        accountManager.saveToFiles();
+                    }
                     System.out.println("Goodbye! 👋");
                     running = false;
                 }

@@ -19,9 +19,9 @@
 ✅ Step 13: Collections — HashMap
 ✅ Step 14: Collections — Sets
 ✅ Step 15: Iterators & ConcurrentModification  ← YOU ARE HERE
-→ Step 16: Enums
-⬜ Step 17: Comparable & Comparator
-⬜ Step 18: File I/O (NIO.2)
+✅ Step 16: Enums
+✅ Step 17: Comparable & Comparator
+→  Step 18: File I/O (NIO.2)
 ⬜ Step 19: Date/Time API
 ⬜ Step 20: Advanced Exceptions
 🎯 INTERVIEW: Senior Java — Phase 1 + 2 concepts
