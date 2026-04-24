@@ -1,5 +1,14 @@
 package org.example.model;
 
+import org.example.model.exception.AccountFrozenException;
+import org.example.model.exception.InsufficientFundsException;
+import org.example.model.exception.InvalidAmountException;
+import org.example.model.exception.InvalidStatusTransitionException;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,10 +32,10 @@ public class BankAccount implements Displayable {
     private final String email;
     private double balance;
     private AccountStatus status;
-    // 🆕 REPLACED: Transaction[] → ArrayList<Transaction>
+    private final LocalDateTime createdAt;
     // No more fixed size! No more manual counting!
     private final List<Transaction> transactions;
-    private int transactionCount;
+    private int transactionCount; // 🆕 we can still track count if we want, but it's redundant with transactions.size()
 
     // --- Constructors (PUBLIC — other packages need to create accounts) ---
 
@@ -44,6 +53,7 @@ public class BankAccount implements Displayable {
         this.email = email;
         this.transactions = new ArrayList<>();
         this.transactionCount = 0;
+        this.createdAt = LocalDateTime.now();
     }
 
     public BankAccount(String ownerName, String email) {
@@ -70,11 +80,10 @@ public class BankAccount implements Displayable {
 
     public void deposit(double amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Deposit amount must be positive.");
+            throw new InvalidAmountException(accountNumber, amount);
         }
         if (status.cannotTransact()) {
-            throw new IllegalStateException("Cannot deposit, account is : " + status.description());
-        }
+            throw new AccountFrozenException(accountNumber, status);   }
         balance += amount;
         addTransaction(TransactionType.DEPOSIT, amount);
 
@@ -82,13 +91,14 @@ public class BankAccount implements Displayable {
 
     public void withdraw(double amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Withdrawal amount must be positive.");
+            throw new InvalidAmountException(accountNumber, amount);
         }
         if (amount > balance) {
-            throw new InsufficientFundsException(amount, balance);
+            throw new InsufficientFundsException(accountNumber, amount, balance);
         }
         if (status.cannotTransact()) {
-            throw new IllegalStateException("Cannot withdraw, account is : " + status.description());
+            throw new AccountFrozenException(accountNumber, status);
+
         }
         balance -= amount;
         addTransaction(TransactionType.WITHDRAWAL, amount);
@@ -101,8 +111,7 @@ public class BankAccount implements Displayable {
 
     public void changeStatus(AccountStatus newStatus) {
         if (!status.canTransitionTo(newStatus)) {
-            throw new IllegalStateException("Cannot change status from " + status
-                    + " to " + newStatus);
+            throw new InvalidStatusTransitionException(accountNumber, status, newStatus);
         }
         AccountStatus oldStatus = status;
         this.status = newStatus;
@@ -110,6 +119,7 @@ public class BankAccount implements Displayable {
                 + oldStatus.icon() + " " + oldStatus
                 + " → " + newStatus.icon() + " " + newStatus);
     }
+
     public void freeze() {
         changeStatus(AccountStatus.FROZEN);
     }
@@ -195,21 +205,21 @@ public class BankAccount implements Displayable {
         }
     }
 
-
     // --- Displayable interface implementation ---
 
     @Override
     public void displayInfo() {
         System.out.println("--- Account Details ---");
-        System.out.println("Bank:      " + BANK_NAME);
-        System.out.println("Account #: " + accountNumber);
-        System.out.println("Owner:     " + ownerName);
-        System.out.println("Email:     " + email);
-        System.out.println("Balance:   $" + String.format("%.2f", balance));
-        System.out.println("Transactions:" + transactions.size());
-        System.out.println("Status: " + status.icon() + " " + status.description());
+        System.out.println("Bank:         " + BANK_NAME);
+        System.out.println("Account #:    " + accountNumber);
+        System.out.println("Owner:        " + ownerName);
+        System.out.println("Email:        " + email);
+        System.out.println("Balance:      $" + String.format("%.2f", balance));
+        System.out.println("Transactions: " + transactions.size());
+        System.out.println("Status:       " + status.icon() + " " + status.description());
+        System.out.println("Created:      " + getFormattedCreatedAt());  // 🆕
+        System.out.println("Account age:  " + getAccountAge());          // 🆕
     }
-
 
     // --- PUBLIC getters — controlled read-only access ---
 
@@ -224,6 +234,7 @@ public class BankAccount implements Displayable {
     public double getBalance() {
         return balance;
     }
+
     public AccountStatus getStatus() {
         return status;
     }
@@ -240,8 +251,63 @@ public class BankAccount implements Displayable {
         return email;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public String getFormattedCreatedAt() {
+        return createdAt.format(DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm"));
+    }
+
+    // 🆕 How old is this account?
+    public String getAccountAge() {
+        Period age = Period.between(createdAt.toLocalDate(), LocalDate.now());
+        if (age.getYears() > 0) {
+            return age.getYears() + " year(s), " + age.getMonths() + " month(s)";
+        } else if (age.getMonths() > 0) {
+            return age.getMonths() + " month(s), " + age.getDays() + " day(s)";
+        } else if (age.getDays() > 0) {
+            return age.getDays() + " day(s)";
+        } else {
+            return "Today";
+        }
+    }
+
+    // 🆕 Get transactions from today only
+    public List<Transaction> getTodaysTransactions() {
+        List<Transaction> today = new ArrayList<>();
+        for (Transaction txn : transactions) {
+            if (txn.isToday()) {
+                today.add(txn);
+            }
+        }
+        return today;
+    }
+
+    // 🆕 Get transactions from the last N hours
+    public List<Transaction> getRecentTransactions(int hours) {
+        List<Transaction> recent = new ArrayList<>();
+        for (Transaction txn : transactions) {
+            if (txn.isWithinLastHours(hours)) {
+                recent.add(txn);
+            }
+        }
+        return recent;
+    }
+
+    // 🆕 Get total amount for a type TODAY
+    public double getTodaysTotalByType(TransactionType type) {
+        double total = 0;
+        for (Transaction txn : transactions) {
+            if (txn.isToday() && txn.getType() == type) {
+                total += txn.getAmount();
+            }
+        }
+        return total;
+    }
+
     @Override
     public String toString() {
-        return String.format("[%s] %s — $%.2f %s", accountNumber, ownerName, balance,status.icon());
+        return String.format("[%s] %s — $%.2f %s", accountNumber, ownerName, balance, status.icon());
     }
 }

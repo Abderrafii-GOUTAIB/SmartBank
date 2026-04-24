@@ -2,7 +2,12 @@ package org.example.app;
 
 import org.example.model.AccountStatus;
 import org.example.model.BankAccount;
+import org.example.model.Transaction;
 import org.example.model.TransactionType;
+import org.example.model.exception.AccountNotFoundException;
+import org.example.model.exception.BankException;
+import org.example.model.exception.DuplicateEmailException;
+import org.example.model.exception.InvalidStatusTransitionException;
 import org.example.service.*;
 import service.InputParser;
 
@@ -26,11 +31,23 @@ public class Main {
         boolean loaded = accountManager.loadFromFiles();
 
         if (!loaded) {
-            // No saved data — create default accounts
             System.out.println("--- Creating Initial Accounts ---");
-            accountManager.createAccount("Abderrafii", "goutaibabderrafii@gmail.com", 1000000.75);
-            accountManager.createAccount("Bob Smith", "bob@smith.com", 800.50);
-            accountManager.createAccount("Carol Davis", "carol@davis.com");
+            try {
+                accountManager.createAccount("Abderrafii", "goutaibabderrafii@gmail.com", 1000000.75);
+                accountManager.createAccount("Bob Smith", "bob@smith.com", 800.50);
+                accountManager.createAccount("Carol Davis", "carol@davis.com");
+            } catch (BankException e) {
+                System.out.println("❌ " + e.toDisplayString());
+            }
+            System.out.println();
+            System.out.println("--- Testing Duplicate Email ---");
+            try {
+                accountManager.createAccount("Impostor", "goutaibabderrafii@gmail.com", 100);
+            } catch (DuplicateEmailException e) {
+                // 🆕 We can catch this SPECIFIC exception and access the email
+                System.out.println("❌ " + e.toDisplayString());
+                System.out.println("   Duplicate email: " + e.getEmail());
+            }
             System.out.println();
         }
 
@@ -60,8 +77,8 @@ public class Main {
             System.out.println("│ 19. Filter Txns      20. Cleanup Demo    │");
             System.out.println("│ 21. Freeze/Activate  22. Account status  │");
             System.out.println("│ 23. Sort Accounts    24. Leaderboard     │");
-            System.out.println("│ 25. Save Data        26.File info        │");
-            System.out.println("│ 27. Exit                                 │");
+            System.out.println("│ 25. Save Data        26. File info       │");
+            System.out.println("│ 27. Today's Activity 28.Exit             │");
             System.out.println("└──────────────────────────────────────────┘");
 
             int choice = InputParser.readInt(scanner, "Choose (1-27): ", 1, 27);
@@ -101,9 +118,13 @@ public class Main {
                 }
                 case 9 -> {
                     System.out.print("Account number: ");
-                    var found = accountManager.findByAccountNumber(
-                            scanner.nextLine().trim().toUpperCase());
-                    if (found != null) accountService.printAccountReport(found);
+                    String accNum = scanner.nextLine().trim().toUpperCase();
+                    try {
+                        BankAccount found = accountManager.findByAccountNumber(accNum);
+                        accountService.printAccountReport(found);
+                    } catch (AccountNotFoundException e) {
+                        System.out.println("❌ " + e.toDisplayString());
+                    }
                 }
                 case 10 -> accountManager.printDailyDepositReport();
                 case 11 -> {
@@ -130,10 +151,14 @@ public class Main {
                     } catch (NumberFormatException e) {
                         System.out.println("Using $0.");
                     }
-                    var newAcc = accountManager.createAccount(name, email, dep);
-                    if (newAcc != null) {
-                        currentAccount = newAcc;
+
+                    try {
+                        currentAccount = accountManager.createAccount(name, email, dep);
                         System.out.println("Switched to new account.");
+                    } catch (DuplicateEmailException e) {
+                        System.out.println("❌ " + e.toDisplayString());
+                    } catch (BankException e) {
+                        System.out.println("❌ " + e.toDisplayString());
                     }
                 }
                 case 13 -> {
@@ -244,8 +269,10 @@ public class Main {
 
                     try {
                         currentAccount.changeStatus(validTransitions.get(statusChoice - 1));
-                    } catch (IllegalStateException e) {
-                        System.out.println("❌ " + e.getMessage());
+                    } catch (InvalidStatusTransitionException e) {
+                        System.out.println("❌ " + e.toDisplayString());
+                        System.out.println("   From: " + e.getFrom().icon() + " " + e.getFrom());
+                        System.out.println("   To:   " + e.getTo().icon() + " " + e.getTo());
                     }
                 }
                 case 22 -> {
@@ -308,7 +335,39 @@ public class Main {
                 // 🆕 Show file info
                 case 26 -> DataStore.printFileInfo();
                 // 🆕 Exit — auto-save before quitting
+                // 🆕 Today's activity — time-based queries
                 case 27 -> {
+                    System.out.println();
+                    System.out.println("--- Today's Activity for " + currentAccount.getOwnerName() + " ---");
+                    System.out.println("Account created: " + currentAccount.getFormattedCreatedAt());
+                    System.out.println("Account age:     " + currentAccount.getAccountAge());
+                    System.out.println();
+
+                    // Today's transactions
+                    var todayTxns = currentAccount.getTodaysTransactions();
+                    System.out.println("Transactions today: " + todayTxns.size());
+
+                    if (!todayTxns.isEmpty()) {
+                        for (Transaction txn : todayTxns) {
+                            System.out.println("  " + txn.getShortDateTime()
+                                    + " | " + txn.getType().displayName()
+                                    + " | " + txn.getType().formatAmount(txn.getAmount())
+                                    + " | " + txn.getTimeAgo());
+                        }
+
+                        System.out.println();
+                        System.out.printf("  Today's deposits:    $%.2f%n",
+                                currentAccount.getTodaysTotalByType(TransactionType.DEPOSIT));
+                        System.out.printf("  Today's withdrawals: $%.2f%n",
+                                currentAccount.getTodaysTotalByType(TransactionType.WITHDRAWAL));
+                    }
+
+                    // Recent activity
+                    System.out.println();
+                    var recentTxns = currentAccount.getRecentTransactions(1);
+                    System.out.println("In the last hour: " + recentTxns.size() + " transaction(s)");
+                }
+                case 28 -> {
                     System.out.println();
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();

@@ -21,10 +21,10 @@
 ✅ Step 15: Iterators & ConcurrentModification  ← YOU ARE HERE
 ✅ Step 16: Enums
 ✅ Step 17: Comparable & Comparator
-→  Step 18: File I/O (NIO.2)
-⬜ Step 19: Date/Time API
-⬜ Step 20: Advanced Exceptions
-🎯 INTERVIEW: Senior Java — Phase 1 + 2 concepts
+✅ Step 18: File I/O (NIO.2)
+✅ Step 19: Date/Time API
+✅ Step 20: Advanced Exceptions
+→ 🎯 INTERVIEW: Senior Java — Phase 1 + 2 concepts 
 
 🟠 PHASE 3 — The Smart Bank                    ⬜
 ⬜ Step 21: Anonymous Classes
@@ -47,7 +47,7 @@
 ⬜ Step 36: SOLID — Interface Segregation
 ⬜ Step 37: SOLID — Dependency Inversion
 ⬜ Step 38: Pattern — Singleton
-⬜ Step 39: Pattern — Factory
+⬜ Step 39: Pattern — Facto  ry
 ⬜ Step 40: Pattern — Builder
 ⬜ Step 41: Pattern — Observer
 ⬜ Step 42: Pattern — Strategy

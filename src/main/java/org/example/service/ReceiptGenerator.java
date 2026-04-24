@@ -31,7 +31,11 @@ public class ReceiptGenerator {
 
         String balanceStr = String.format("$%.2f", txn.getBalanceAfter());
         sb.append(formatLine("Balance After", balanceStr)).append('\n');
+        sb.append(formatLine("Date", txn.getFormattedDateTime())).append('\n');
+        sb.append(formatLine("", txn.getTimeAgo())).append('\n');
+
         sb.append(divider()).append('\n');
+        sb.append(centerText("Thank you for banking with us!")).append('\n');
 
         sb.append(centerText("Thank you for banking with us!")).append('\n');
         sb.append(bottomBorder()).append('\n');
@@ -69,6 +73,7 @@ public class ReceiptGenerator {
             sb.append(padRight("TYPE", 14)); // 🆕 wider for display names
             sb.append(padRight("AMOUNT", 12));
             sb.append(padRight("BALANCE", 10));
+            sb.append(padRight("TIME", 13));
             sb.append(VERTICAL).append('\n');
             sb.append(divider()).append('\n');
 
@@ -80,6 +85,7 @@ public class ReceiptGenerator {
                 // 🆕 ENUM FIX: use formatAmount() for +/- prefix
                 sb.append(padRight(txn.getType().formatAmount(txn.getAmount()), 12));
                 sb.append(padRight(String.format("$%.2f", txn.getBalanceAfter()), 10));
+                sb.append(padRight(txn.getShortDateTime(), 13));
                 sb.append(VERTICAL).append('\n');
             }
         }

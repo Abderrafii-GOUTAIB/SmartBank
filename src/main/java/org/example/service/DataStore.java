@@ -40,6 +40,7 @@ public class DataStore {
                     account.getEmail(),
                     String.format("%.2f", account.getBalance()),
                     account.getStatus().name(),
+                    account.getCreatedAt().format(Transaction.FILE_FORMAT),  // 🆕 save creation date
                     String.valueOf(account.getTransactionCount())
             ));
             builder.append(System.lineSeparator());
@@ -123,7 +124,7 @@ public class DataStore {
                         txn.getType().name(),         // DEPOSIT, WITHDRAWAL, etc.
                         String.valueOf(txn.getAmount()),
                         String.valueOf(txn.getBalanceAfter()),
-                        String.valueOf(txn.getTimestamp())
+                        txn.getFileDateTime()  // 🆕 save creation date
                 ));
                 sb.append(System.lineSeparator());
             }

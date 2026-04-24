@@ -1,6 +1,8 @@
 package org.example.service;
 
 import org.example.model.BankAccount;
+import org.example.model.exception.AccountNotFoundException;
+import org.example.model.exception.DuplicateEmailException;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,11 +28,11 @@ public class AccountManager {
     }
 
     public BankAccount createAccount(String ownerName, String email, double initialBalance) {
-        try {
+
             String normalizedEmail = email == null ? "" : email.trim().toLowerCase();
 
             if (registeredEmails.contains(normalizedEmail)) {
-                throw new IllegalArgumentException("Email already registered");
+                throw new DuplicateEmailException(normalizedEmail);
             }
 
             BankAccount account = new BankAccount(ownerName, normalizedEmail, initialBalance);
@@ -41,10 +43,7 @@ public class AccountManager {
             registeredEmails.add(account.getEmail());
             System.out.println("📋 Created: " + account);
             return account;
-        } catch (IllegalArgumentException e) {
-            System.out.println("❌ Cannot create account: " + email + " :" + e.getMessage());
-            return null;
-        }
+
     }
 
     public void createAccount(String ownerName, String email) {
@@ -152,12 +151,16 @@ public class AccountManager {
     // Linear search through the list — we'll replace this with HashMap in Step 13
     public BankAccount findByAccountNumber(String accountNumber) {
 
-
         BankAccount account = accountMap.get(accountNumber);
         if (account == null) {
-            System.out.println("❌ Account not found: " + accountNumber);
+            throw new AccountNotFoundException(accountNumber);
         }
         return account;
+    }
+
+    // Safe version — for cases where null is OK (like optional lookups)
+    public BankAccount findByAccountNumberOrNull(String accountNumber) {
+        return accountMap.get(accountNumber);
     }
 
 
