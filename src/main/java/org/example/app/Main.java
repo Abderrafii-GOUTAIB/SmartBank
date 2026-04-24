@@ -78,10 +78,12 @@ public class Main {
             System.out.println("│ 21. Freeze/Activate  22. Account status  │");
             System.out.println("│ 23. Sort Accounts    24. Leaderboard     │");
             System.out.println("│ 25. Save Data        26. File info       │");
-            System.out.println("│ 27. Today's Activity 28.Exit             │");
+            System.out.println("│ 27. Today's Activity                     │");
+            System.out.println("│ 28. Process Transactions                 │");
+            System.out.println("│ 29. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-27): ", 1, 27);
+            int choice = InputParser.readInt(scanner, "Choose (1-28): ", 1, 28);
 
             if (currentAccount == null && (choice >= 0)) {
                 System.out.println("⚠️  No account selected. Use option 11.");
@@ -368,6 +370,109 @@ public class Main {
                     System.out.println("In the last hour: " + recentTxns.size() + " transaction(s)");
                 }
                 case 28 -> {
+
+                    if (currentAccount.getTransactionCount() == 0) {
+                        System.out.println("⚠️  No transactions yet. Make some deposits/withdrawals first.");
+                        break;
+                    }
+
+
+                    System.out.println();
+                    System.out.println("--- Transaction Processing (Anonymous Classes) ---");
+                    System.out.println("  1. Filter: deposits only");
+                    System.out.println("  2. Filter: large transactions (> $500)");
+                    System.out.println("  3. Filter: large deposits (combined filter)");
+                    System.out.println("  4. Transform: receipt format");
+                    System.out.println("  5. Transform: CSV export");
+                    System.out.println("  6. Process: detailed view (multi-method handler)");
+                    System.out.println("  7. Process: summary view (handler with state)");
+                    System.out.println("  8. Sort: by amount (highest first)");
+                    System.out.println("  9. Custom filter (enter min amount)");
+
+                    int procChoice = InputParser.readInt(scanner, "Choose (1-9): ", 1, 9);
+                    var txns = currentAccount.getTransactions();
+
+                    switch (procChoice) {
+
+                        // Pre-defined anonymous class filter
+                        case 1 -> {
+                            var filtered = TransactionProcessor.filterTransactions(
+                                    txns, TransactionProcessor.DEPOSITS_ONLY);
+                            System.out.println("Deposits (" + filtered.size() + "):");
+                            filtered.forEach(t -> System.out.println("  " + t));
+                        }
+
+                        // Factory method returning anonymous class
+                        case 2 -> {
+                            var filter = TransactionProcessor.aboveAmount(500);
+                            var filtered = TransactionProcessor.filterTransactions(txns, filter);
+                            System.out.println("Large transactions (" + filtered.size() + "):");
+                            filtered.forEach(t -> System.out.println("  " + t));
+                        }
+
+                        // COMBINED filter — AND of two anonymous classes
+                        case 3 -> {
+                            var combined = TransactionProcessor.and(
+                                    TransactionProcessor.DEPOSITS_ONLY,
+                                    TransactionProcessor.aboveAmount(500)
+                            );
+                            var filtered = TransactionProcessor.filterTransactions(txns, combined);
+                            System.out.println("Large deposits (" + filtered.size() + "):");
+                            filtered.forEach(t -> System.out.println("  " + t));
+                        }
+
+                        // Transformer — receipt format
+                        case 4 -> {
+                            var lines = TransactionProcessor.transformTransactions(
+                                    txns, TransactionProcessor.RECEIPT_FORMAT);
+                            System.out.println("Receipt format:");
+                            lines.forEach(System.out::println);
+                        }
+
+                        // Transformer — CSV
+                        case 5 -> {
+                            var lines = TransactionProcessor.transformTransactions(
+                                    txns, TransactionProcessor.CSV_FORMAT);
+                            System.out.println("id,type,amount,balance,datetime");
+                            lines.forEach(System.out::println);
+                        }
+
+                        // Multi-method handler — detailed
+                        case 6 -> TransactionProcessor.processAll(
+                                currentAccount, TransactionProcessor.CONSOLE_HANDLER);
+
+                        // Multi-method handler with STATE — summary
+                        case 7 -> TransactionProcessor.processAll(
+                                currentAccount, TransactionProcessor.SUMMARY_HANDLER);
+
+                        // Sort by amount
+                        case 8 -> {
+                            var sorted = TransactionProcessor.sortByAmountDescending(txns);
+                            System.out.println("Sorted by amount (highest first):");
+                            sorted.forEach(t -> System.out.println("  " + t));
+                        }
+
+                        // INLINE anonymous class — created right here in Main
+                        case 9 -> {
+                            double min = InputParser.readPositiveDouble(scanner, "Minimum amount: $");
+
+                            // Anonymous class created INLINE — not predefined
+                            TransactionProcessor.TransactionFilter customFilter =
+                                    new TransactionProcessor.TransactionFilter() {
+                                        @Override
+                                        public boolean accept(Transaction transaction) {
+                                            return transaction.getAmount() >= min;
+                                        }
+                                    };
+
+                            var filtered = TransactionProcessor.filterTransactions(txns, customFilter);
+                            System.out.println("Transactions ≥ $" + String.format("%.2f", min)
+                                    + " (" + filtered.size() + "):");
+                            filtered.forEach(t -> System.out.println("  " + t));
+                        }
+                    }
+                }
+                case 29 -> {
                     System.out.println();
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();

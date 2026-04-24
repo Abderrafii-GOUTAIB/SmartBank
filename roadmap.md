@@ -24,11 +24,11 @@
 ✅ Step 18: File I/O (NIO.2)
 ✅ Step 19: Date/Time API
 ✅ Step 20: Advanced Exceptions
-→ 🎯 INTERVIEW: Senior Java — Phase 1 + 2 concepts 
+✅ 🎯 INTERVIEW: Senior Java — Phase 1 + 2 concepts 
 
 🟠 PHASE 3 — The Smart Bank                    ⬜
-⬜ Step 21: Anonymous Classes
-⬜ Step 22: Lambda Expressions
+✅ Step 21: Anonymous Classes
+→  Step 22: Lambda Expressions
 ⬜ Step 23: Method References
 ⬜ Step 24: Functional Interfaces
 ⬜ Step 25: Streams API — Basics
