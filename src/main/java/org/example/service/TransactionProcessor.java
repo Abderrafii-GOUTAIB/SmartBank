@@ -7,30 +7,26 @@ import org.example.model.TransactionType;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.ToDoubleFunction;
 
 public class TransactionProcessor {
 
-    private TransactionProcessor() {
-        throw new AssertionError("Cannot instantiate utility class");
-    }
-
     // ================================================
-    // INTERFACE — defines what a "filter" does
+    // INTERFACES (unchanged from Step 21)
     // ================================================
 
-    // This interface has ONE method — it's a "functional interface"
-    // That matters in Step 22 (lambdas can replace it)
+    @FunctionalInterface  // 🆕 This annotation ENFORCES single-method rule
     public interface TransactionFilter {
         boolean accept(Transaction transaction);
     }
 
-    // This interface has ONE method — also functional
+    @FunctionalInterface
     public interface TransactionTransformer {
         String transform(Transaction transaction);
     }
 
-    // This interface has MULTIPLE methods — NOT functional
-    // Lambdas CANNOT replace this — anonymous class is required
+    // NOT @FunctionalInterface — has multiple methods, lambdas can't touch this
     public interface TransactionHandler {
         void onStart(String accountName);
         void onTransaction(Transaction transaction);
@@ -38,8 +34,7 @@ public class TransactionProcessor {
     }
 
     // ================================================
-    // ANONYMOUS CLASS EXAMPLE 1 — Single-method interface
-    // (These will become lambdas in Step 22)
+    // CORE METHODS (unchanged)
     // ================================================
 
     public static List<Transaction> filterTransactions(List<Transaction> transactions,
@@ -53,40 +48,6 @@ public class TransactionProcessor {
         return result;
     }
 
-    // Predefined filters using anonymous classes
-    // Each one creates a nameless class that implements TransactionFilter
-
-    // Filter: only deposits
-    public static final TransactionFilter DEPOSITS_ONLY = new TransactionFilter() {
-        @Override
-        public boolean accept(Transaction transaction) {
-            return transaction.getType() == TransactionType.DEPOSIT;
-        }
-    };
-
-    // Filter: only withdrawals
-    public static final TransactionFilter WITHDRAWALS_ONLY = new TransactionFilter() {
-        @Override
-        public boolean accept(Transaction transaction) {
-            return transaction.getType() == TransactionType.WITHDRAWAL;
-        }
-    };
-
-    // Filter: large transactions (above a threshold)
-    // This shows that anonymous classes can capture variables
-    public static TransactionFilter aboveAmount(double threshold) {
-        return new TransactionFilter() {
-            @Override
-            public boolean accept(Transaction transaction) {
-                return transaction.getAmount() > threshold;
-            }
-        };
-    }
-
-    // ================================================
-    // ANONYMOUS CLASS EXAMPLE 2 — Transformer
-    // ================================================
-
     public static List<String> transformTransactions(List<Transaction> transactions,
                                                      TransactionTransformer transformer) {
         List<String> result = new ArrayList<>();
@@ -96,53 +57,170 @@ public class TransactionProcessor {
         return result;
     }
 
-    // Receipt-style transformer
-    public static final TransactionTransformer RECEIPT_FORMAT = new TransactionTransformer() {
-        @Override
-        public String transform(Transaction transaction) {
-            return String.format("  [%s] %s %s",
-                    transaction.getType().displayName(),
-                    transaction.getType().formatAmount(transaction.getAmount()),
-                    transaction.getShortDateTime());
-        }
-    };
-
-    // CSV transformer — for export
-    public static final TransactionTransformer CSV_FORMAT = new TransactionTransformer() {
-        @Override
-        public String transform(Transaction transaction) {
-            return String.join(",",
-                    String.valueOf(transaction.getId()),
-                    transaction.getType().name(),
-                    String.valueOf(transaction.getAmount()),
-                    String.valueOf(transaction.getBalanceAfter()),
-                    transaction.getFileDateTime());
-        }
-    };
-
-    // ================================================
-    // ANONYMOUS CLASS EXAMPLE 3 — Multi-method interface
-    // This CANNOT be replaced by a lambda (multiple methods)
-    // ================================================
-
     public static void processAll(BankAccount account, TransactionHandler handler) {
         List<Transaction> transactions = account.getTransactions();
-
         handler.onStart(account.getOwnerName());
-
         double totalAmount = 0;
         int count = 0;
-
         for (Transaction txn : transactions) {
             handler.onTransaction(txn);
             totalAmount += txn.getAmount();
             count++;
         }
-
         handler.onComplete(count, totalAmount);
     }
 
-    // A "console printer" handler — anonymous class with 3 methods
+    // ================================================
+    // 🆕 LAMBDA FILTERS — replacing anonymous classes
+    // ================================================
+
+    // --- BEFORE (anonymous class from Step 21): ---
+    // public static final TransactionFilter DEPOSITS_ONLY = new TransactionFilter() {
+    //     @Override
+    //     public boolean accept(Transaction transaction) {
+    //         return transaction.getType() == TransactionType.DEPOSIT;
+    //     }
+    // };
+
+    // --- AFTER (lambda — same behavior, 1 line): ---
+    public static final TransactionFilter DEPOSITS_ONLY =
+            txn -> txn.getType() == TransactionType.DEPOSIT;
+
+    public static final TransactionFilter WITHDRAWALS_ONLY =
+            txn -> txn.getType() == TransactionType.WITHDRAWAL;
+
+    public static final TransactionFilter CREDITS_ONLY =
+            txn -> txn.getType().isCredit();
+
+    public static final TransactionFilter DEBITS_ONLY =
+            txn -> txn.getType().isDebit();
+
+    // 🆕 Lambda with captured variable (closure)
+    // --- BEFORE: ---
+    // public static TransactionFilter aboveAmount(double threshold) {
+    //     return new TransactionFilter() {
+    //         @Override
+    //         public boolean accept(Transaction transaction) {
+    //             return transaction.getAmount() > threshold;
+    //         }
+    //     };
+    // }
+
+    // --- AFTER: ---
+    public static TransactionFilter aboveAmount(double threshold) {
+        // 'threshold' is effectively final — captured by the lambda
+        return txn -> txn.getAmount() > threshold;
+    }
+
+    public static TransactionFilter belowAmount(double threshold) {
+        return txn -> txn.getAmount() < threshold;
+    }
+
+    public static TransactionFilter betweenAmount(double min, double max) {
+        // Lambda captures BOTH variables — both must be effectively final
+        return txn -> txn.getAmount() >= min && txn.getAmount() <= max;
+    }
+
+    public static TransactionFilter ofType(TransactionType type) {
+        return txn -> txn.getType() == type;
+    }
+
+    // 🆕 Today's transactions only
+    public static final TransactionFilter TODAY_ONLY =
+            txn -> txn.isToday();
+
+    // ================================================
+    // 🆕 LAMBDA TRANSFORMERS
+    // ================================================
+
+    // --- BEFORE (anonymous class): ---
+    // public static final TransactionTransformer RECEIPT_FORMAT = new TransactionTransformer() {
+    //     @Override
+    //     public String transform(Transaction transaction) {
+    //         return String.format("  [%s] %s %s", ...);
+    //     }
+    // };
+
+    // --- AFTER (lambda): ---
+    public static final TransactionTransformer RECEIPT_FORMAT =
+            txn -> String.format("  [%-12s] %s  %s",
+                    txn.getType().displayName(),
+                    txn.getType().formatAmount(txn.getAmount()),
+                    txn.getShortDateTime());
+
+    public static final TransactionTransformer CSV_FORMAT =
+            txn -> String.join(",",
+                    String.valueOf(txn.getId()),
+                    txn.getType().name(),
+                    String.valueOf(txn.getAmount()),
+                    String.valueOf(txn.getBalanceAfter()),
+                    txn.getFileDateTime());
+
+    // 🆕 Multi-line lambda (when logic is more complex)
+    public static final TransactionTransformer SUMMARY_FORMAT = txn -> {
+        String direction = txn.getType().isCredit() ? "IN " : "OUT";
+        String amount = String.format("$%.2f", txn.getAmount());
+        String timeAgo = txn.getTimeAgo();
+        return String.format("  %s  %-10s  %s", direction, amount, timeAgo);
+    };
+
+    // ================================================
+    // 🆕 LAMBDA COMPARATORS — replacing anonymous Comparator classes
+    // ================================================
+
+    // --- BEFORE: ---
+    // sorted.sort(new Comparator<Transaction>() {
+    //     @Override
+    //     public int compare(Transaction a, Transaction b) {
+    //         return Double.compare(b.getAmount(), a.getAmount());
+    //     }
+    // });
+
+    // --- AFTER: ---
+    public static List<Transaction> sortByAmountDescending(List<Transaction> transactions) {
+        List<Transaction> sorted = new ArrayList<>(transactions);
+        sorted.sort((a, b) -> Double.compare(b.getAmount(), a.getAmount()));
+        return sorted;
+    }
+
+    public static List<Transaction> sortByDateDescending(List<Transaction> transactions) {
+        List<Transaction> sorted = new ArrayList<>(transactions);
+        sorted.sort((a, b) -> b.getDateTime().compareTo(a.getDateTime()));
+        return sorted;
+    }
+
+    // ================================================
+    // 🆕 FILTER COMBINATORS — now with lambdas
+    // ================================================
+
+    // --- BEFORE (anonymous class): ---
+    // public static TransactionFilter and(TransactionFilter f1, TransactionFilter f2) {
+    //     return new TransactionFilter() {
+    //         @Override
+    //         public boolean accept(Transaction transaction) {
+    //             return f1.accept(transaction) && f2.accept(transaction);
+    //         }
+    //     };
+    // }
+
+    // --- AFTER (lambda): ---
+    public static TransactionFilter and(TransactionFilter f1, TransactionFilter f2) {
+        return txn -> f1.accept(txn) && f2.accept(txn);
+    }
+
+    public static TransactionFilter or(TransactionFilter f1, TransactionFilter f2) {
+        return txn -> f1.accept(txn) || f2.accept(txn);
+    }
+
+    public static TransactionFilter not(TransactionFilter filter) {
+        return txn -> !filter.accept(txn);
+    }
+
+    // ================================================
+    // 🆕 MULTI-METHOD HANDLERS — these STILL need anonymous classes
+    // Lambdas CANNOT replace these (multiple methods)
+    // ================================================
+
     public static final TransactionHandler CONSOLE_HANDLER = new TransactionHandler() {
         @Override
         public void onStart(String accountName) {
@@ -166,10 +244,7 @@ public class TransactionProcessor {
         }
     };
 
-    // A "summary only" handler — different behavior, same interface
     public static final TransactionHandler SUMMARY_HANDLER = new TransactionHandler() {
-        // This handler has STATE — a field that tracks across calls
-        // Lambdas can't have fields — another reason anonymous classes exist
         private int depositCount = 0;
         private int withdrawalCount = 0;
 
@@ -182,7 +257,6 @@ public class TransactionProcessor {
 
         @Override
         public void onTransaction(Transaction transaction) {
-            // Silently count — don't print each one
             if (transaction.getType().isCredit()) depositCount++;
             else withdrawalCount++;
         }
@@ -196,55 +270,43 @@ public class TransactionProcessor {
     };
 
     // ================================================
-    // ANONYMOUS CLASS EXAMPLE 4 — Custom Comparator inline
+    // 🆕 HIGHER-ORDER METHODS — methods that ACCEPT lambdas
     // ================================================
 
-    public static List<Transaction> sortByAmountDescending(List<Transaction> transactions) {
-        List<Transaction> sorted = new ArrayList<>(transactions);
-
-        // Anonymous Comparator — defined right where it's used
-        sorted.sort(new Comparator<Transaction>() {
-            @Override
-            public int compare(Transaction a, Transaction b) {
-                // Reversed: b compared to a = descending
-                return Double.compare(b.getAmount(), a.getAmount());
-            }
-        });
-
-        return sorted;
+    // Process each transaction with a custom action (lambda as parameter)
+    public static void forEach(List<Transaction> transactions,
+                               Consumer<Transaction> action) {
+        for (Transaction txn : transactions) {
+            action.accept(txn);
+        }
     }
 
-    // ================================================
-    // COMBINING FILTERS — anonymous class that wraps two others
-    // ================================================
-
-    // Combine two filters with AND logic
-    public static TransactionFilter and(TransactionFilter filter1, TransactionFilter filter2) {
-        return new TransactionFilter() {
-            @Override
-            public boolean accept(Transaction transaction) {
-                return filter1.accept(transaction) && filter2.accept(transaction);
-            }
-        };
+    // Calculate a value from each transaction (lambda as parameter)
+    public static double sumBy(List<Transaction> transactions,
+                               ToDoubleFunction<Transaction> extractor) {
+        double total = 0;
+        for (Transaction txn : transactions) {
+            total += extractor.applyAsDouble(txn);
+        }
+        return total;
     }
 
-    // Combine two filters with OR logic
-    public static TransactionFilter or(TransactionFilter filter1, TransactionFilter filter2) {
-        return new TransactionFilter() {
-            @Override
-            public boolean accept(Transaction transaction) {
-                return filter1.accept(transaction) || filter2.accept(transaction);
-            }
-        };
+    // Find first transaction matching a condition
+    public static Transaction findFirst(List<Transaction> transactions,
+                                        TransactionFilter filter) {
+        for (Transaction txn : transactions) {
+            if (filter.accept(txn)) return txn;
+        }
+        return null;
     }
 
-    // Negate a filter
-    public static TransactionFilter not(TransactionFilter filter) {
-        return new TransactionFilter() {
-            @Override
-            public boolean accept(Transaction transaction) {
-                return !filter.accept(transaction);
-            }
-        };
+    // Count transactions matching a condition
+    public static int count(List<Transaction> transactions,
+                            TransactionFilter filter) {
+        int count = 0;
+        for (Transaction txn : transactions) {
+            if (filter.accept(txn)) count++;
+        }
+        return count;
     }
 }
