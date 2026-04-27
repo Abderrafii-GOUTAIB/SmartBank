@@ -29,7 +29,9 @@ public class TransactionProcessor {
     // NOT @FunctionalInterface — has multiple methods, lambdas can't touch this
     public interface TransactionHandler {
         void onStart(String accountName);
+
         void onTransaction(Transaction transaction);
+
         void onComplete(int totalProcessed, double totalAmount);
     }
 
@@ -127,7 +129,7 @@ public class TransactionProcessor {
 
     // 🆕 Today's transactions only
     public static final TransactionFilter TODAY_ONLY =
-            txn -> txn.isToday();
+            Transaction::isToday;
 
     // ================================================
     // 🆕 LAMBDA TRANSFORMERS

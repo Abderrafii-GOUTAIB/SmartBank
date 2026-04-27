@@ -32,36 +32,29 @@ public class AccountComparators {
 
     // The manual way — before Comparator.comparing() existed (Java 8)
     // This is what the elegant one-liners above do internally
-    public static final Comparator<BankAccount> BY_BALANCE_MANUAL =
-            new Comparator<BankAccount>() {
-                @Override
-                public int compare(BankAccount a, BankAccount b) {
-                    // Rule: return negative if a < b, 0 if equal, positive if a > b
-                    // Double.compare handles NaN and -0.0 edge cases correctly
-                    return Double.compare(a.getBalance(), b.getBalance());
-                }
-            };
+    public static final Comparator<BankAccount> BY_BALANCE_MANUAL = (a, b) -> Double.compare(a.getBalance(), b.getBalance());
 
     public static Comparator<BankAccount> byName(String name) {
         return switch (name.toLowerCase()) {
-            case "name", "name_asc"          -> BY_NAME;
-            case "name_desc"                 -> BY_NAME_DESC;
-            case "balance", "balance_asc"    -> BY_BALANCE;
-            case "balance_desc"              -> BY_BALANCE_DESC;
-            case "activity"                  -> BY_ACTIVITY;
-            case "status"                    -> BY_STATUS;
-            case "status_balance"            -> BY_STATUS_THEN_BALANCE;
+            case "name", "name_asc" -> BY_NAME;
+            case "name_desc" -> BY_NAME_DESC;
+            case "balance", "balance_asc" -> BY_BALANCE;
+            case "balance_desc" -> BY_BALANCE_DESC;
+            case "activity" -> BY_ACTIVITY;
+            case "status" -> BY_STATUS;
+            case "status_balance" -> BY_STATUS_THEN_BALANCE;
             default -> BY_ACCOUNT_NUMBER;
         };
     }
+
     public static String describe(Comparator<BankAccount> comp) {
-        if (comp == BY_NAME)                return "Name (A → Z)";
-        if (comp == BY_NAME_DESC)           return "Name (Z → A)";
-        if (comp == BY_BALANCE)             return "Balance (lowest first)";
-        if (comp == BY_BALANCE_DESC)        return "Balance (highest first)";
-        if (comp == BY_ACTIVITY)            return "Most active first";
-        if (comp == BY_ACCOUNT_NUMBER)      return "Account number";
-        if (comp == BY_STATUS)              return "Status";
+        if (comp == BY_NAME) return "Name (A → Z)";
+        if (comp == BY_NAME_DESC) return "Name (Z → A)";
+        if (comp == BY_BALANCE) return "Balance (lowest first)";
+        if (comp == BY_BALANCE_DESC) return "Balance (highest first)";
+        if (comp == BY_ACTIVITY) return "Most active first";
+        if (comp == BY_ACCOUNT_NUMBER) return "Account number";
+        if (comp == BY_STATUS) return "Status";
         if (comp == BY_STATUS_THEN_BALANCE) return "Status, then balance";
         return "Custom";
     }

@@ -47,7 +47,7 @@
 ⬜ Step 36: SOLID — Interface Segregation
 ⬜ Step 37: SOLID — Dependency Inversion
 ⬜ Step 38: Pattern — Singleton
-⬜ Step 39: Pattern — Facto  ry
+⬜ Step 39: Pattern — Factory
 ⬜ Step 40: Pattern — Builder
 ⬜ Step 41: Pattern — Observer
 ⬜ Step 42: Pattern — Strategy

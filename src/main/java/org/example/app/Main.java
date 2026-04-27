@@ -80,10 +80,12 @@ public class Main {
             System.out.println("│ 25. Save Data        26. File info       │");
             System.out.println("│ 27. Today's Activity                     │");
             System.out.println("│ 28. Process Transactions                 │");
-            System.out.println("│ 29. Exit                                 │");
+            System.out.println("│ 29. Method Ref Analytics                 │");
+            System.out.println("│ 30. Method Ref Demo (4 types)            │");
+            System.out.println("│ 31. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-28): ", 1, 28);
+            int choice = InputParser.readInt(scanner, "Choose (1-31): ", 1, 31);
 
             if (currentAccount == null && (choice >= 0)) {
                 System.out.println("⚠️  No account selected. Use option 11.");
@@ -512,6 +514,47 @@ public class Main {
                     }
                 }
                 case 29 -> {
+                    if (currentAccount.getTransactionCount() == 0) {
+                        System.out.println("⚠️  No transactions yet.");
+                        break;
+                    }
+                    TransactionAnalytics.runFullAnalytics(currentAccount);
+                }
+                case 30 -> {
+                    if (currentAccount.getTransactionCount() == 0) {
+                        System.out.println("⚠️  No transactions yet.");
+                        break;
+                    }
+
+                    var txns = currentAccount.getTransactions();
+
+                    System.out.println();
+                    System.out.println("=== Method Reference Types Demo ===");
+                    System.out.println("  1. Type 1: Static method ref");
+                    System.out.println("  2. Type 2: Instance on specific object");
+                    System.out.println("  3. Type 3: Instance on arbitrary object");
+                    System.out.println("  4. Type 4: Constructor ref");
+                    System.out.println("  5. All four");
+
+                    int demoChoice = InputParser.readInt(scanner, "Choose (1-5): ", 1, 5);
+
+                    switch (demoChoice) {
+                        case 1 -> TransactionAnalytics.demonstrateStaticMethodRef(txns);
+                        case 2 -> TransactionAnalytics.demonstrateInstanceOnObject(txns, currentAccount);
+                        case 3 -> TransactionAnalytics.demonstrateInstanceOnArbitrary(txns);
+                        case 4 -> TransactionAnalytics.demonstrateConstructorRef(txns);
+                        case 5 -> {
+                            TransactionAnalytics.demonstrateStaticMethodRef(txns);
+                            System.out.println();
+                            TransactionAnalytics.demonstrateInstanceOnObject(txns, currentAccount);
+                            System.out.println();
+                            TransactionAnalytics.demonstrateInstanceOnArbitrary(txns);
+                            System.out.println();
+                            TransactionAnalytics.demonstrateConstructorRef(txns);
+                        }
+                    }
+                }
+                case 31 -> {
                     System.out.println();
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();
