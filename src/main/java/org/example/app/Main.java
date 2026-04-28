@@ -14,6 +14,7 @@ import service.InputParser;
 import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class Main {
 
@@ -82,10 +83,12 @@ public class Main {
             System.out.println("│ 28. Process Transactions                 │");
             System.out.println("│ 29. Method Ref Analytics                 │");
             System.out.println("│ 30. Method Ref Demo (4 types)            │");
-            System.out.println("│ 31. Exit                                 │");
+            System.out.println("│ 31. Functional Interfaces Demo           │");
+            System.out.println("│ 32. Query Pipeline                       │");
+            System.out.println("│ 33. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-31): ", 1, 31);
+            int choice = InputParser.readInt(scanner, "Choose (1-33): ", 1, 32);
 
             if (currentAccount == null && (choice >= 0)) {
                 System.out.println("⚠️  No account selected. Use option 11.");
@@ -555,6 +558,114 @@ public class Main {
                     }
                 }
                 case 31 -> {
+                    var allAccounts = accountManager.getAllAccounts();
+
+                    if (allAccounts.isEmpty()) {
+                        System.out.println("⚠️  No accounts exist.");
+                        break;
+                    }
+
+                    System.out.println();
+                    System.out.println("=== Functional Interfaces Demo ===");
+                    System.out.println("  1. Predicate    (T → boolean)");
+                    System.out.println("  2. Function     (T → R)");
+                    System.out.println("  3. Consumer     (T → void)");
+                    System.out.println("  4. Supplier     (() → T)");
+                    System.out.println("  5. UnaryOperator (T → T)");
+                    System.out.println("  6. BinaryOperator (T,T → T)");
+                    System.out.println("  7. Bi-interfaces (T,U → R)");
+                    System.out.println("  8. All of them");
+
+                    int fiChoice = InputParser.readInt(scanner, "Choose (1-8): ", 1, 8);
+
+                    switch (fiChoice) {
+                        case 1 -> AccountQueryEngine.demonstratePredicate(allAccounts);
+                        case 2 -> AccountQueryEngine.demonstrateFunction(allAccounts);
+                        case 3 -> AccountQueryEngine.demonstrateConsumer(allAccounts);
+                        case 4 -> AccountQueryEngine.demonstrateSupplier();
+                        case 5 -> AccountQueryEngine.demonstrateUnaryOperator();
+                        case 6 -> AccountQueryEngine.demonstrateBinaryOperator(allAccounts);
+                        case 7 -> AccountQueryEngine.demonstrateBiInterfaces(allAccounts);
+                        case 8 -> {
+                            AccountQueryEngine.demonstratePredicate(allAccounts);
+                            System.out.println();
+                            AccountQueryEngine.demonstrateFunction(allAccounts);
+                            System.out.println();
+                            AccountQueryEngine.demonstrateConsumer(allAccounts);
+                            System.out.println();
+                            AccountQueryEngine.demonstrateSupplier();
+                            System.out.println();
+                            AccountQueryEngine.demonstrateUnaryOperator();
+                            System.out.println();
+                            AccountQueryEngine.demonstrateBinaryOperator(allAccounts);
+                            System.out.println();
+                            AccountQueryEngine.demonstrateBiInterfaces(allAccounts);
+                        }
+                    }
+                }
+
+                case 32 -> {
+                    var allAccounts = accountManager.getAllAccounts();
+
+                    if (allAccounts.isEmpty()) {
+                        System.out.println("⚠️  No accounts exist.");
+                        break;
+                    }
+
+                    System.out.println();
+                    System.out.println("=== Query Pipeline ===");
+                    System.out.println("  1. Active accounts with balance > $500");
+                    System.out.println("  2. Frozen or low balance (< $100)");
+                    System.out.println("  3. Name contains... (you type)");
+                    System.out.println("  4. Custom: active AND rich AND has transactions");
+                    System.out.println("  5. Full demo");
+
+                    int qChoice = InputParser.readInt(scanner, "Choose (1-5): ", 1, 5);
+
+                    switch (qChoice) {
+                        case 1 -> {
+                            System.out.println("\nActive + balance > $500:");
+                            AccountQueryEngine.runQuery(allAccounts,
+                                    AccountQueryEngine.IS_ACTIVE.and(AccountQueryEngine.balanceAbove(500)),
+                                    AccountQueryEngine.FORMAT_DETAILED,
+                                    System.out::println);
+                        }
+
+                        case 2 -> {
+                            System.out.println("\nFrozen OR balance < $100:");
+                            AccountQueryEngine.runQuery(allAccounts,
+                                    AccountQueryEngine.IS_FROZEN.or(AccountQueryEngine.balanceBelow(100)),
+                                    AccountQueryEngine.FORMAT_SIMPLE,
+                                    System.out::println);
+                        }
+
+                        case 3 -> {
+                            System.out.print("Search name: ");
+                            String search = scanner.nextLine();
+                            System.out.println("\nAccounts matching \"" + search + "\":");
+                            AccountQueryEngine.runQuery(allAccounts,
+                                    AccountQueryEngine.nameContains(search),
+                                    AccountQueryEngine.FORMAT_DETAILED,
+                                    System.out::println);
+                        }
+
+                        case 4 -> {
+                            System.out.println("\nActive AND balance > $1000 AND has transactions:");
+                            Predicate<BankAccount> complex =
+                                    AccountQueryEngine.IS_ACTIVE
+                                            .and(AccountQueryEngine.balanceAbove(1000))
+                                            .and(AccountQueryEngine.HAS_TRANSACTIONS);
+                            AccountQueryEngine.runQuery(allAccounts,
+                                    complex,
+                                    AccountQueryEngine.FORMAT_DETAILED,
+                                    System.out::println);
+                        }
+
+                        case 5 -> AccountQueryEngine.demonstrateQueryPipeline(allAccounts);
+                    }
+
+                }
+                case 33 -> {
                     System.out.println();
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();
