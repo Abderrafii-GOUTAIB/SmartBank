@@ -243,6 +243,10 @@ public class BankAccount implements Displayable {
         return status.cannotTransact();
     }
 
+    public boolean isActive() {
+        return status == AccountStatus.ACTIVE;
+    }
+
     public int getTransactionCount() {
         return transactions.size();
     }

@@ -85,7 +85,9 @@ public class Main {
             System.out.println("│ 30. Method Ref Demo (4 types)            │");
             System.out.println("│ 31. Functional Interfaces Demo           │");
             System.out.println("│ 32. Query Pipeline                       │");
-            System.out.println("│ 33. Exit                                 │");
+            System.out.println("│ 33. Stream Dashboard                     │");
+            System.out.println("│ 34. Stream Txn Analysis                  │");
+            System.out.println("│ 35. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
             int choice = InputParser.readInt(scanner, "Choose (1-33): ", 1, 32);
@@ -666,6 +668,21 @@ public class Main {
 
                 }
                 case 33 -> {
+                    var allAccounts = accountManager.getAllAccounts();
+                    StreamAccountService.printDashboard(allAccounts);
+                }
+
+                // 🆕 Stream-powered transaction analysis
+                case 34 -> {
+
+                    if (currentAccount.getTransactionCount() == 0) {
+                        System.out.println("⚠️  No transactions yet.");
+                        break;
+                    }
+                    StreamAccountService.printTransactionAnalysis(currentAccount);
+                }
+
+                case 35 -> {
                     System.out.println();
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();
@@ -675,6 +692,7 @@ public class Main {
                     System.out.println("Goodbye! 👋");
                     running = false;
                 }
+
             }
         }
 
