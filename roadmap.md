@@ -31,8 +31,8 @@
 ✅ Step 22: Lambda Expressions
 ✅ Step 23: Method References
 ✅ Step 24: Functional Interfaces
-→  Step 25: Streams API — Basics
-⬜ Step 26: Streams API — Advanced
+✅ Step 25: Streams API — Basics
+→  Step 26: Streams API — Advanced
 ⬜ Step 27: Optional
 ⬜ Step 28: Generics
 ⬜ Step 29: Records

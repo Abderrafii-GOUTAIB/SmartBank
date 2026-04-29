@@ -87,10 +87,11 @@ public class Main {
             System.out.println("│ 32. Query Pipeline                       │");
             System.out.println("│ 33. Stream Dashboard                     │");
             System.out.println("│ 34. Stream Txn Analysis                  │");
-            System.out.println("│ 35. Exit                                 │");
+            System.out.println("│ 35. Advanced Analytics                   │");
+            System.out.println("│ 36. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-33): ", 1, 32);
+            int choice = InputParser.readInt(scanner, "Choose (1-36): ", 1, 36);
 
             if (currentAccount == null && (choice >= 0)) {
                 System.out.println("⚠️  No account selected. Use option 11.");
@@ -99,8 +100,7 @@ public class Main {
 
 
             switch (choice) {
-                case 1 -> System.out.println("💰 Balance: $"
-                        + String.format("%.2f", currentAccount.getBalance()));
+                case 1 -> System.out.println("💰 Balance: $" + String.format("%.2f", currentAccount.getBalance()));
                 case 2 -> {
                     double amount = InputParser.readPositiveDouble(scanner, "Deposit amount: $");
                     accountService.processDeposit(currentAccount, amount);
@@ -115,8 +115,7 @@ public class Main {
                     System.out.print("Destination account: ");
                     String toAccNum = scanner.nextLine().trim().toUpperCase();
                     double amount = InputParser.readPositiveDouble(scanner, "Amount: $");
-                    accountService.processTransfer(
-                            currentAccount.getAccountNumber(), toAccNum, amount);
+                    accountService.processTransfer(currentAccount.getAccountNumber(), toAccNum, amount);
                 }
                 case 5 -> accountService.printAccountReport(currentAccount);
                 case 6 -> currentAccount.printMiniStatement();
@@ -141,9 +140,7 @@ public class Main {
                         System.out.println("No accounts exist.");
                     } else {
                         accountManager.printAccountList();
-                        int acc = InputParser.readInt(scanner,
-                                "Choose (1-" + accountManager.getAccountCount() + "): ",
-                                1, accountManager.getAccountCount());
+                        int acc = InputParser.readInt(scanner, "Choose (1-" + accountManager.getAccountCount() + "): ", 1, accountManager.getAccountCount());
                         currentAccount = accountManager.getAccountByIndex(acc - 1);
                     }
                 }
@@ -176,8 +173,7 @@ public class Main {
                     String accNum = scanner.nextLine().trim().toUpperCase();
                     if (accountManager.closeAccount(accNum)) {
                         if (currentAccount.getAccountNumber().equals(accNum)) {
-                            currentAccount = accountManager.hasAccounts()
-                                    ? accountManager.getAccountByIndex(0) : null;
+                            currentAccount = accountManager.hasAccounts() ? accountManager.getAccountByIndex(0) : null;
                         }
                     }
                 }
@@ -211,8 +207,7 @@ public class Main {
                     System.out.println("  Filter by transaction type:");
                     TransactionType[] types = TransactionType.values();
                     for (int i = 0; i < types.length; i++) {
-                        System.out.println("  " + (i + 1) + ". " + types[i].displayName()
-                                + (types[i].isCredit() ? " (+)" : " (-)"));
+                        System.out.println("  " + (i + 1) + ". " + types[i].displayName() + (types[i].isCredit() ? " (+)" : " (-)"));
                     }
                     System.out.println("  " + (types.length + 1) + ". Show ALL");
                     int filter = InputParser.readInt(scanner, "Choose: ", 1, types.length + 1);
@@ -249,9 +244,7 @@ public class Main {
                     tempList.forEach(a -> System.out.println("  " + a));
                 }
                 case 21 -> {
-                    System.out.println("  Current status: "
-                            + currentAccount.getStatus().icon() + " "
-                            + currentAccount.getStatus().description());
+                    System.out.println("  Current status: " + currentAccount.getStatus().icon() + " " + currentAccount.getStatus().description());
                     System.out.println();
                     System.out.println("  Available transitions:");
 
@@ -262,8 +255,7 @@ public class Main {
                     for (AccountStatus s : allStatuses) {
                         if (currentAccount.getStatus().canTransitionTo(s)) {
                             validTransitions.add(s);
-                            System.out.println("    " + validTransitions.size() + ". "
-                                    + s.icon() + " " + s.description());
+                            System.out.println("    " + validTransitions.size() + ". " + s.icon() + " " + s.description());
                         }
                     }
 
@@ -272,9 +264,7 @@ public class Main {
                         break;
                     }
 
-                    int statusChoice = InputParser.readInt(scanner,
-                            "Choose transition (1-" + validTransitions.size() + "): ",
-                            1, validTransitions.size());
+                    int statusChoice = InputParser.readInt(scanner, "Choose transition (1-" + validTransitions.size() + "): ", 1, validTransitions.size());
 
                     try {
                         currentAccount.changeStatus(validTransitions.get(statusChoice - 1));
@@ -332,12 +322,9 @@ public class Main {
                     var busiest = accountManager.getMostActiveAccount();
 
                     if (richest != null) {
-                        System.out.println("  💰 Richest:     " + richest.getOwnerName()
-                                + " ($" + String.format("%,.2f", richest.getBalance()) + ")");
-                        System.out.println("  📉 Lowest:      " + poorest.getOwnerName()
-                                + " ($" + String.format("%,.2f", poorest.getBalance()) + ")");
-                        System.out.println("  ⚡ Most active:  " + busiest.getOwnerName()
-                                + " (" + busiest.getTransactionCount() + " transactions)");
+                        System.out.println("  💰 Richest:     " + richest.getOwnerName() + " ($" + String.format("%,.2f", richest.getBalance()) + ")");
+                        System.out.println("  📉 Lowest:      " + poorest.getOwnerName() + " ($" + String.format("%,.2f", poorest.getBalance()) + ")");
+                        System.out.println("  ⚡ Most active:  " + busiest.getOwnerName() + " (" + busiest.getTransactionCount() + " transactions)");
                     }
                 }
                 case 25 -> accountManager.saveToFiles();
@@ -358,17 +345,12 @@ public class Main {
 
                     if (!todayTxns.isEmpty()) {
                         for (Transaction txn : todayTxns) {
-                            System.out.println("  " + txn.getShortDateTime()
-                                    + " | " + txn.getType().displayName()
-                                    + " | " + txn.getType().formatAmount(txn.getAmount())
-                                    + " | " + txn.getTimeAgo());
+                            System.out.println("  " + txn.getShortDateTime() + " | " + txn.getType().displayName() + " | " + txn.getType().formatAmount(txn.getAmount()) + " | " + txn.getTimeAgo());
                         }
 
                         System.out.println();
-                        System.out.printf("  Today's deposits:    $%.2f%n",
-                                currentAccount.getTodaysTotalByType(TransactionType.DEPOSIT));
-                        System.out.printf("  Today's withdrawals: $%.2f%n",
-                                currentAccount.getTodaysTotalByType(TransactionType.WITHDRAWAL));
+                        System.out.printf("  Today's deposits:    $%.2f%n", currentAccount.getTodaysTotalByType(TransactionType.DEPOSIT));
+                        System.out.printf("  Today's withdrawals: $%.2f%n", currentAccount.getTodaysTotalByType(TransactionType.WITHDRAWAL));
                     }
 
                     // Recent activity
@@ -406,8 +388,7 @@ public class Main {
                         // Pre-defined anonymous class filter
                         // 🆕 Predefined lambda filter
                         case 1 -> {
-                            var filtered = TransactionProcessor.filterTransactions(
-                                    txns, TransactionProcessor.DEPOSITS_ONLY);
+                            var filtered = TransactionProcessor.filterTransactions(txns, TransactionProcessor.DEPOSITS_ONLY);
                             System.out.println("Deposits (" + filtered.size() + "):");
                             filtered.forEach(t -> System.out.println("  " + t));
                             //              ↑ THIS is also a lambda! forEach takes Consumer<T>
@@ -415,44 +396,36 @@ public class Main {
 
                         // 🆕 Factory method returns a lambda
                         case 2 -> {
-                            var filtered = TransactionProcessor.filterTransactions(
-                                    txns, TransactionProcessor.aboveAmount(500));
+                            var filtered = TransactionProcessor.filterTransactions(txns, TransactionProcessor.aboveAmount(500));
                             System.out.println("Large transactions (" + filtered.size() + "):");
                             filtered.forEach(t -> System.out.println("  " + t));
                         }
 
                         // 🆕 Combined lambdas
                         case 3 -> {
-                            var combined = TransactionProcessor.and(
-                                    TransactionProcessor.DEPOSITS_ONLY,
-                                    TransactionProcessor.aboveAmount(500)
-                            );
+                            var combined = TransactionProcessor.and(TransactionProcessor.DEPOSITS_ONLY, TransactionProcessor.aboveAmount(500));
                             var filtered = TransactionProcessor.filterTransactions(txns, combined);
                             System.out.println("Large deposits (" + filtered.size() + "):");
                             filtered.forEach(t -> System.out.println("  " + t));
                         }
 
                         case 4 -> {
-                            var lines = TransactionProcessor.transformTransactions(
-                                    txns, TransactionProcessor.RECEIPT_FORMAT);
+                            var lines = TransactionProcessor.transformTransactions(txns, TransactionProcessor.RECEIPT_FORMAT);
                             System.out.println("Receipt format:");
                             lines.forEach(System.out::println);
                             // ↑ System.out::println is a METHOD REFERENCE (Step 23!)
                         }
 
                         case 5 -> {
-                            var lines = TransactionProcessor.transformTransactions(
-                                    txns, TransactionProcessor.CSV_FORMAT);
+                            var lines = TransactionProcessor.transformTransactions(txns, TransactionProcessor.CSV_FORMAT);
                             System.out.println("id,type,amount,balance,datetime");
                             lines.forEach(System.out::println);
                         }
 
                         // Multi-method handlers — still anonymous classes (can't be lambdas)
-                        case 6 -> TransactionProcessor.processAll(
-                                currentAccount, TransactionProcessor.CONSOLE_HANDLER);
+                        case 6 -> TransactionProcessor.processAll(currentAccount, TransactionProcessor.CONSOLE_HANDLER);
 
-                        case 7 -> TransactionProcessor.processAll(
-                                currentAccount, TransactionProcessor.SUMMARY_HANDLER);
+                        case 7 -> TransactionProcessor.processAll(currentAccount, TransactionProcessor.SUMMARY_HANDLER);
 
                         case 8 -> {
                             var sorted = TransactionProcessor.sortByAmountDescending(txns);
@@ -474,12 +447,10 @@ public class Main {
                             //     };
 
                             // AFTER (lambda — one line):
-                            var filtered = TransactionProcessor.filterTransactions(
-                                    txns, t -> t.getAmount() >= min);
+                            var filtered = TransactionProcessor.filterTransactions(txns, t -> t.getAmount() >= min);
                             //        ↑ the entire filter is this tiny lambda
 
-                            System.out.println("Transactions ≥ $" + String.format("%.2f", min)
-                                    + " (" + filtered.size() + "):");
+                            System.out.println("Transactions ≥ $" + String.format("%.2f", min) + " (" + filtered.size() + "):");
                             filtered.forEach(t -> System.out.println("  " + t));
                         }
 
@@ -489,29 +460,22 @@ public class Main {
 
                             // forEach with lambda — custom action for each transaction
                             System.out.println("All transactions:");
-                            TransactionProcessor.forEach(txns,
-                                    t -> System.out.println("  " + t.getType().formatAmount(t.getAmount())
-                                            + " " + t.getTimeAgo()));
+                            TransactionProcessor.forEach(txns, t -> System.out.println("  " + t.getType().formatAmount(t.getAmount()) + " " + t.getTimeAgo()));
 
                             // sumBy with lambda — extract a value and sum it
-                            double totalDeposits = TransactionProcessor.sumBy(txns,
-                                    t -> t.getType().isCredit() ? t.getAmount() : 0);
-                            double totalWithdrawals = TransactionProcessor.sumBy(txns,
-                                    t -> t.getType().isDebit() ? t.getAmount() : 0);
+                            double totalDeposits = TransactionProcessor.sumBy(txns, t -> t.getType().isCredit() ? t.getAmount() : 0);
+                            double totalWithdrawals = TransactionProcessor.sumBy(txns, t -> t.getType().isDebit() ? t.getAmount() : 0);
 
                             System.out.printf("%n  Total credits:  $%.2f%n", totalDeposits);
                             System.out.printf("  Total debits:   $%.2f%n", totalWithdrawals);
                             System.out.printf("  Net:            $%.2f%n", totalDeposits - totalWithdrawals);
 
                             // count with lambda
-                            int largeCount = TransactionProcessor.count(txns,
-                                    t -> t.getAmount() > 1000);
+                            int largeCount = TransactionProcessor.count(txns, t -> t.getAmount() > 1000);
                             System.out.println("  Large transactions (>$1000): " + largeCount);
 
                             // findFirst with lambda
-                            Transaction biggest = TransactionProcessor.findFirst(
-                                    TransactionProcessor.sortByAmountDescending(txns),
-                                    t -> true);  // first in descending = biggest
+                            Transaction biggest = TransactionProcessor.findFirst(TransactionProcessor.sortByAmountDescending(txns), t -> true);  // first in descending = biggest
                             if (biggest != null) {
                                 System.out.println("  Biggest: " + biggest.getType().formatAmount(biggest.getAmount()));
                             }
@@ -627,40 +591,25 @@ public class Main {
                     switch (qChoice) {
                         case 1 -> {
                             System.out.println("\nActive + balance > $500:");
-                            AccountQueryEngine.runQuery(allAccounts,
-                                    AccountQueryEngine.IS_ACTIVE.and(AccountQueryEngine.balanceAbove(500)),
-                                    AccountQueryEngine.FORMAT_DETAILED,
-                                    System.out::println);
+                            AccountQueryEngine.runQuery(allAccounts, AccountQueryEngine.IS_ACTIVE.and(AccountQueryEngine.balanceAbove(500)), AccountQueryEngine.FORMAT_DETAILED, System.out::println);
                         }
 
                         case 2 -> {
                             System.out.println("\nFrozen OR balance < $100:");
-                            AccountQueryEngine.runQuery(allAccounts,
-                                    AccountQueryEngine.IS_FROZEN.or(AccountQueryEngine.balanceBelow(100)),
-                                    AccountQueryEngine.FORMAT_SIMPLE,
-                                    System.out::println);
+                            AccountQueryEngine.runQuery(allAccounts, AccountQueryEngine.IS_FROZEN.or(AccountQueryEngine.balanceBelow(100)), AccountQueryEngine.FORMAT_SIMPLE, System.out::println);
                         }
 
                         case 3 -> {
                             System.out.print("Search name: ");
                             String search = scanner.nextLine();
                             System.out.println("\nAccounts matching \"" + search + "\":");
-                            AccountQueryEngine.runQuery(allAccounts,
-                                    AccountQueryEngine.nameContains(search),
-                                    AccountQueryEngine.FORMAT_DETAILED,
-                                    System.out::println);
+                            AccountQueryEngine.runQuery(allAccounts, AccountQueryEngine.nameContains(search), AccountQueryEngine.FORMAT_DETAILED, System.out::println);
                         }
 
                         case 4 -> {
                             System.out.println("\nActive AND balance > $1000 AND has transactions:");
-                            Predicate<BankAccount> complex =
-                                    AccountQueryEngine.IS_ACTIVE
-                                            .and(AccountQueryEngine.balanceAbove(1000))
-                                            .and(AccountQueryEngine.HAS_TRANSACTIONS);
-                            AccountQueryEngine.runQuery(allAccounts,
-                                    complex,
-                                    AccountQueryEngine.FORMAT_DETAILED,
-                                    System.out::println);
+                            Predicate<BankAccount> complex = AccountQueryEngine.IS_ACTIVE.and(AccountQueryEngine.balanceAbove(1000)).and(AccountQueryEngine.HAS_TRANSACTIONS);
+                            AccountQueryEngine.runQuery(allAccounts, complex, AccountQueryEngine.FORMAT_DETAILED, System.out::println);
                         }
 
                         case 5 -> AccountQueryEngine.demonstrateQueryPipeline(allAccounts);
@@ -681,8 +630,16 @@ public class Main {
                     }
                     StreamAccountService.printTransactionAnalysis(currentAccount);
                 }
-
                 case 35 -> {
+                    var allAccounts = accountManager.getAllAccounts();
+                    if (allAccounts.isEmpty()) {
+                        System.out.println("⚠️  No accounts exist.");
+                        break;
+                    }
+                    StreamAdvancedService.printAdvancedDashboard(allAccounts);
+                }
+
+                case 36 -> {
                     System.out.println();
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();
