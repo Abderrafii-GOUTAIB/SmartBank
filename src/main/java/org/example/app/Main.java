@@ -88,10 +88,12 @@ public class Main {
             System.out.println("│ 33. Stream Dashboard                     │");
             System.out.println("│ 34. Stream Txn Analysis                  │");
             System.out.println("│ 35. Advanced Analytics                   │");
-            System.out.println("│ 36. Exit                                 │");
+            System.out.println("│ 36. Optional Demo                        │");
+            System.out.println("│ 37. Safe Account Lookup                  │");
+            System.out.println("│ 38. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-36): ", 1, 36);
+            int choice = InputParser.readInt(scanner, "Choose (1-38): ", 1, 38);
 
             if (currentAccount == null && (choice >= 0)) {
                 System.out.println("⚠️  No account selected. Use option 11.");
@@ -640,6 +642,50 @@ public class Main {
                 }
 
                 case 36 -> {
+                    {
+                        var allAccounts = accountManager.getAllAccounts();
+
+                        if (allAccounts.isEmpty()) {
+                            System.out.println("⚠️  No accounts exist.");
+                            break;
+                        }
+
+                        System.out.println();
+                        System.out.println("=== Optional Demo ===");
+                        System.out.println("  1. Consuming (ifPresent, orElse, orElseThrow)");
+                        System.out.println("  2. Transforming (map, filter, flatMap)");
+                        System.out.println("  3. With Streams (findFirst, max, fallback chains)");
+                        System.out.println("  4. Anti-patterns (what NOT to do)");
+                        System.out.println("  5. All of the above");
+
+                        int optChoice = InputParser.readInt(scanner, "Choose (1-5): ", 1, 5);
+
+                        switch (optChoice) {
+                            case 1 -> OptionalAccountService.demonstrateConsuming(allAccounts);
+                            case 2 -> OptionalAccountService.demonstrateTransforming(allAccounts);
+                            case 3 -> OptionalAccountService.demonstrateWithStreams(allAccounts);
+                            case 4 -> OptionalAccountService.demonstrateAntiPatterns();
+                            case 5 -> {
+                                OptionalAccountService.demonstrateConsuming(allAccounts);
+                                System.out.println();
+                                OptionalAccountService.demonstrateTransforming(allAccounts);
+                                System.out.println();
+                                OptionalAccountService.demonstrateWithStreams(allAccounts);
+                                System.out.println();
+                                OptionalAccountService.demonstrateAntiPatterns();
+                            }
+                        }
+                    }
+                }
+
+                case 37 -> {
+                    var allAccounts = accountManager.getAllAccounts();
+                    System.out.print("Enter account number: ");
+                    String accNum = scanner.nextLine().trim().toUpperCase();
+                    OptionalAccountService.printSafeReport(allAccounts, accNum);
+                }
+
+                case 38 -> {
                     System.out.println();
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();
