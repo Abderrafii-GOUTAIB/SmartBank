@@ -90,10 +90,12 @@ public class Main {
             System.out.println("│ 35. Advanced Analytics                   │");
             System.out.println("│ 36. Optional Demo                        │");
             System.out.println("│ 37. Safe Account Lookup                  │");
-            System.out.println("│ 38. Exit                                 │");
+            System.out.println("│ 38. Generics Demo                        │");
+            System.out.println("│ 39. Type Erasure Demo                    │");
+            System.out.println("│ 40. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-38): ", 1, 38);
+            int choice = InputParser.readInt(scanner, "Choose (1-40): ", 1, 40);
 
             if (currentAccount == null && (choice >= 0)) {
                 System.out.println("⚠️  No account selected. Use option 11.");
@@ -684,8 +686,19 @@ public class Main {
                     String accNum = scanner.nextLine().trim().toUpperCase();
                     OptionalAccountService.printSafeReport(allAccounts, accNum);
                 }
-
                 case 38 -> {
+                    var allAccounts = accountManager.getAllAccounts();
+                    if (allAccounts.isEmpty()) {
+                        System.out.println("⚠️  No accounts exist.");
+                        break;
+                    }
+                    GenericDemo.runDemo(allAccounts);
+                }
+
+                case 39 -> GenericDemo.demonstrateTypeErasure();
+
+
+                case 40 -> {
                     System.out.println();
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();
