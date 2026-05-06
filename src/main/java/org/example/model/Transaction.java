@@ -166,5 +166,4 @@ public class Transaction implements Comparable<Transaction> {
                 balanceAfter,
                 getShortDateTime());  // 🆕 human-readable date
     }
-
 }

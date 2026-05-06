@@ -93,10 +93,11 @@ public class Main {
             System.out.println("│ 38. Generics Demo                        │");
             System.out.println("│ 39. Type Erasure Demo                    │");
             System.out.println("│ 40. Records Demo                         │");
-            System.out.println("│ 41. Exit                                 │");
+            System.out.println("│ 41. Sealed Classes Demo                  │");
+            System.out.println("│ 42. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-41): ", 1, 41);
+            int choice = InputParser.readInt(scanner, "Choose (1-42): ", 1, 42);
 
             if (currentAccount == null && (choice >= 0)) {
                 System.out.println("⚠️  No account selected. Use option 11.");
@@ -710,6 +711,10 @@ public class Main {
                     RecordDemo.demonstrateLocalRecords(allAccounts);
                 }
                 case 41 -> {
+                    var allAccounts = accountManager.getAllAccounts();
+                    SealedDemo.runDemo(allAccounts);
+                }
+                case 42 -> {
                     System.out.println();
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();
