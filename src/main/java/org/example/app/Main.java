@@ -94,6 +94,7 @@ public class Main {
             System.out.println("│ 39. Type Erasure Demo                    │");
             System.out.println("│ 40. Records Demo                         │");
             System.out.println("│ 41. Sealed Classes Demo                  │");
+            System.out.println("│ 41. Immutability Demo                    │");
             System.out.println("│ 42. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
@@ -715,6 +716,10 @@ public class Main {
                     SealedDemo.runDemo(allAccounts);
                 }
                 case 42 -> {
+                    var allAccounts = accountManager.getAllAccounts();
+                    ImmutabilityDemo.runFullDemo(allAccounts);
+                }
+                case 43 -> {
                     System.out.println();
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();
