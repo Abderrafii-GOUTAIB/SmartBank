@@ -4,10 +4,10 @@
 ✅ Step 0:  How Java Works (JVM, JDK, JRE)
 ✅ Step 1:  Variables, Data Types & Operators
 ✅ Step 2:  Control Flow — Conditions & Loops
-✅ Step 3:  Methods                          (catch-up)
-✅ Step 4:  Arrays & Strings                 (catch-up)
-✅ Step 5:  Classes & Objects                (catch-up)
-✅ Step 6:  The 4 OOP Pillars                (catch-up)
+✅ Step 3:  Methods                         
+✅ Step 4:  Arrays & Strings                
+✅ Step 5:  Classes & Objects               
+✅ Step 6:  The 4 OOP Pillars               
 ✅ Step 7:  Constructors, this, static, final
 ✅ Step 8:  Packages & Access Modifiers
 ✅ Step 9:  Basic Exception Handling
@@ -38,11 +38,11 @@
 ✅ Step 29: Records
 ✅ Step 30: Sealed Classes
 ✅ Step 31: Immutability & Defensive Copying
-→  🎯 INTERVIEW: Senior Java — Phase 3
+✅ 🎯 INTERVIEW: Senior Java — Phase 3
 
 🔴 PHASE 4 — The Architect's Bank ⬜
-⬜ Step 32: Object Contract (equals, hashCode, toString)
-⬜ Step 33: SOLID — Single Responsibility
+✅ Step 32: Object Contract (equals, hashCode, toString)
+→  Step 33: SOLID — Single Responsibility
 ⬜ Step 34: SOLID — Open/Closed
 ⬜ Step 35: SOLID — Liskov Substitution
 ⬜ Step 36: SOLID — Interface Segregation
