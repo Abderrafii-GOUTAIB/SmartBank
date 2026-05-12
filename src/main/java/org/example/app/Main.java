@@ -94,11 +94,12 @@ public class Main {
             System.out.println("│ 39. Type Erasure Demo                    │");
             System.out.println("│ 40. Records Demo                         │");
             System.out.println("│ 41. Sealed Classes Demo                  │");
-            System.out.println("│ 41. Immutability Demo                    │");
-            System.out.println("│ 42. Exit                                 │");
+            System.out.println("│ 42. Immutability Demo                    │");
+            System.out.println("│ 43. Object Contract Demo                 │");
+            System.out.println("│ 44. Exit                                 │");
             System.out.println("└──────────────────────────────────────────┘");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-42): ", 1, 42);
+            int choice = InputParser.readInt(scanner, "Choose (1-44): ", 1, 44);
 
             if (currentAccount == null && (choice >= 0)) {
                 System.out.println("⚠️  No account selected. Use option 11.");
@@ -720,7 +721,12 @@ public class Main {
                     ImmutabilityDemo.runFullDemo(allAccounts);
                 }
                 case 43 -> {
-                    System.out.println();
+                    var allAccounts = accountManager.getAllAccounts();
+                    ObjectContractDemo.runDemo(allAccounts);
+                }
+
+
+                case 44 -> {
                     System.out.print("Save before exiting? (y/n): ");
                     String answer = scanner.nextLine().trim().toLowerCase();
                     if (answer.startsWith("y")) {

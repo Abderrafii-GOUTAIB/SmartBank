@@ -11,6 +11,7 @@ import java.time.Period;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class BankAccount implements Displayable {
 
@@ -309,6 +310,23 @@ public class BankAccount implements Displayable {
         }
         return total;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        // Step 1: Am I comparing with myself? Obviously yes.
+        if (this == o) return true;
+
+        // Step 2: Is the other thing even a BankAccount? If not, not equal.
+        if (!(o instanceof BankAccount other)) return false;
+
+        // Step 3: Same account number = same account.
+        return Objects.equals(this.accountNumber, other.accountNumber);
+    }
+    @Override
+    public int hashCode() {
+        return Objects.hash(accountNumber);
+    }
+
 
     @Override
     public String toString() {

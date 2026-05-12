@@ -37,8 +37,8 @@
 ✅ Step 28: Generics
 ✅ Step 29: Records
 ✅ Step 30: Sealed Classes
-→  Step 31: Immutability & Defensive Copying
-⬜ 🎯 INTERVIEW: Senior Java — Phase 3
+✅ Step 31: Immutability & Defensive Copying
+→  🎯 INTERVIEW: Senior Java — Phase 3
 
 🔴 PHASE 4 — The Architect's Bank ⬜
 ⬜ Step 32: Object Contract (equals, hashCode, toString)

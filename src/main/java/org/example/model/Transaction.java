@@ -3,6 +3,7 @@ package org.example.model;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 
 public class Transaction implements Comparable<Transaction> {
     private static int nextId = 1;
@@ -155,6 +156,17 @@ public class Transaction implements Comparable<Transaction> {
     public LocalDateTime getDateTime()  { return dateTime; }
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Transaction other)) return false;
+        return this.transactionId == other.transactionId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(transactionId);
+    }
 
     // 🆕 Updated toString with formatted datetime
     @Override
