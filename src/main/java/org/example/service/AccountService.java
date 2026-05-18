@@ -69,7 +69,7 @@ public class AccountService {
                     e.getErrorCode(), e.getMessage());
 
         } catch (InvalidAmountException e) {
-            System.out.println("  ❌ " + e.toDisplayString());
+            System.out.println(" ❌ " + e.toDisplayString());
             return new TransactionResult.Failure(
                     account.getAccountNumber(), amount,
                     e.getErrorCode(), e.getMessage());
@@ -157,11 +157,11 @@ public class AccountService {
             return TransferResult.failure(fromAccNum, toAccNum, amount, e.getMessage());
 
         } catch (InsufficientFundsException e) {
-            System.out.println("  ❌ " + e.toDisplayString());
+            System.out.println(" ❌ :" + e.toDisplayString());
             return TransferResult.failure(fromAccNum, toAccNum, amount, e.getMessage());
 
         } catch (AccountFrozenException e) {
-            System.out.println("  ❌ " + e.toDisplayString());
+            System.out.println(" ❌ " + e.toDisplayString());
             return TransferResult.failure(fromAccNum, toAccNum, amount, e.getMessage());
         }
     }
@@ -247,6 +247,30 @@ public class AccountService {
         System.out.println("║  Transactions: " + totalTxns + " total");
         System.out.println("║  Types seen: " + String.join(", ", types));
         System.out.println("╚══════════════════════════════════════════════╝");
+
+        // Account types breakdown using streams + groupingBy
+        var typeBreakdown = all.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        acc -> acc.getAccountType().displayName(),
+                        java.util.stream.Collectors.counting()));
+
+        System.out.println("╠══════════════════════════════════════════════╣");
+        System.out.println("║  📊 By type:");
+        typeBreakdown.forEach((type, count) ->
+                System.out.println("║    " + type + ": " + count + " account(s)"));
+
+        // Monthly interest preview
+        double monthlyInterest = all.stream()
+                .filter(BankAccount::isActive)
+                .mapToDouble(BankAccount::calculateInterest)
+                .sum();
+        double monthlyFees = all.stream()
+                .filter(BankAccount::isActive)
+                .mapToDouble(BankAccount::getMonthlyFee)
+                .sum();
+
+        System.out.printf("║  💰 Monthly interest (projected): $%,.2f%n", monthlyInterest);
+        System.out.printf("║  💸 Monthly fees (projected):     $%,.2f%n", monthlyFees);
     }
 
     public void printAccountReport(BankAccount account) {
@@ -298,7 +322,90 @@ public class AccountService {
 
     // --- Accessors for Main to use ---
 
-    public AccountRepository getRepository() { return repository; }
-    public RiskService getRiskService() { return riskService; }
-    public TransactionTracker getTracker() { return tracker; }
+    public AccountRepository getRepository() {
+        return repository;
+    }
+
+    public RiskService getRiskService() {
+        return riskService;
+    }
+
+    public TransactionTracker getTracker() {
+        return tracker;
+    }
+
+    public void applyMonthlyInterest() {
+        System.out.println();
+        System.out.println("--- Applying Monthly Interest ---");
+
+        List<BankAccount> all = repository.getAll();
+        double totalInterest = 0;
+
+        for (BankAccount account : all) {
+            if (!account.isActive()) {
+                System.out.printf("  %s: skipped (%s)%n",
+                        account.getAccountNumber(),
+                        account.getStatus().description());
+                continue;
+            }
+
+            // OCP in action: account.calculateInterest() calls
+            // accountType.calculateInterest(balance)
+            // Each type returns its own rate. We don't switch on type here.
+            double interest = account.calculateInterest();
+
+            if (interest > 0) {
+                account.deposit(interest);
+                tracker.recordCategory(TransactionType.INTEREST);
+                totalInterest += interest;
+
+                System.out.printf("  %s (%s): $%,.2f interest at %.1f%%%n",
+                        account.getAccountNumber(),
+                        account.getAccountType().displayName(),
+                        interest,
+                        account.getAccountType().interestRate() * 100);
+            }
+        }
+
+        System.out.printf("  Total interest applied: $%,.2f%n", totalInterest);
+        DataStore.appendLog("INTEREST_APPLIED: $" + String.format("%.2f", totalInterest));
+    }
+
+    public void applyMonthlyFees() {
+        System.out.println();
+        System.out.println("--- Applying Monthly Fees ---");
+
+        List<BankAccount> all = repository.getAll();
+        double totalFees = 0;
+
+        for (BankAccount account : all) {
+            if (!account.isActive()) continue;
+
+            // OCP: account.getMonthlyFee() delegates to accountType.monthlyFee()
+            double fee = account.getMonthlyFee();
+
+            if (fee > 0) {
+                try {
+                    account.withdraw(fee);
+                    tracker.recordCategory(TransactionType.FEE);
+                    totalFees += fee;
+
+                    System.out.printf("  %s (%s): $%.2f fee%n",
+                            account.getAccountNumber(),
+                            account.getAccountType().displayName(),
+                            fee);
+                } catch (Exception e) {
+                    System.out.printf("  %s: fee failed — %s%n",
+                            account.getAccountNumber(), e.getMessage());
+                }
+            } else {
+                System.out.printf("  %s (%s): no fee ✅%n",
+                        account.getAccountNumber(),
+                        account.getAccountType().displayName());
+            }
+        }
+
+        System.out.printf("  Total fees collected: $%,.2f%n", totalFees);
+        DataStore.appendLog("FEES_APPLIED: $" + String.format("%.2f", totalFees));
+    }
 }

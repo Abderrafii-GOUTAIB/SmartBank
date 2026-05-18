@@ -3,7 +3,10 @@ package org.example.app;
 import org.example.model.*;
 import org.example.model.exception.*;
 import org.example.service.*;
+
+import java.util.ArrayList;
 import java.util.Scanner;
+
 import service.InputParser;
 
 public class Main {
@@ -27,12 +30,9 @@ public class Main {
         if (repository.isEmpty()) {
             System.out.println("--- Welcome! Creating starter accounts ---");
             try {
-                bankService.openAccount("Abderrafii", "abderrafii@gmail.com",
-                        50000, new AccountType.Savings());
-                bankService.openAccount("Bob Smith", "bob@smith.com",
-                        800.50, new AccountType.Checking());
-                bankService.openAccount("Carol Davis", "carol@davis.com",
-                        15000, new AccountType.Business());
+                bankService.openAccount("Abderrafii", "abderrafii@gmail.com", 50000, new AccountType.Savings());
+                bankService.openAccount("Bob Smith", "bob@smith.com", 800.50, new AccountType.Checking());
+                bankService.openAccount("Carol Davis", "carol@davis.com", 15000, new AccountType.Business());
             } catch (BankException e) {
                 System.out.println("  ❌ " + e.toDisplayString());
             }
@@ -56,34 +56,36 @@ public class Main {
             System.out.println("╔═════════════════════════════════════╗");
             System.out.println("║         SMARTBANK MENU              ║");
             System.out.println("╠═════════════════════════════════════╣");
-            System.out.println("║  ACCOUNTS                          ║");
-            System.out.println("║   1. Open Account                  ║");
-            System.out.println("║   2. View Account                  ║");
-            System.out.println("║   3. Switch Account                ║");
-            System.out.println("║   4. Close Account                 ║");
-            System.out.println("║   5. Freeze / Activate             ║");
-            System.out.println("║                                    ║");
-            System.out.println("║  TRANSACTIONS                      ║");
-            System.out.println("║   6. Deposit                       ║");
-            System.out.println("║   7. Withdraw                      ║");
-            System.out.println("║   8. Transfer                      ║");
-            System.out.println("║   9. Transaction History           ║");
-            System.out.println("║                                    ║");
-            System.out.println("║  REPORTS                           ║");
-            System.out.println("║  10. Dashboard                     ║");
-            System.out.println("║  11. Search Accounts               ║");
-            System.out.println("║  12. Daily Activity                ║");
-            System.out.println("║                                    ║");
-            System.out.println("║  RISK                              ║");
-            System.out.println("║  13. Flag / Unflag Account         ║");
-            System.out.println("║  14. View Flagged                  ║");
-            System.out.println("║                                    ║");
-            System.out.println("║  SYSTEM                            ║");
-            System.out.println("║  15. Save                          ║");
-            System.out.println("║  16. Exit                          ║");
+            System.out.println("║  ACCOUNTS                           ║");
+            System.out.println("║   1. Open Account                   ║");
+            System.out.println("║   2. View Account                   ║");
+            System.out.println("║   3. Switch Account                 ║");
+            System.out.println("║   4. Close Account                  ║");
+            System.out.println("║   5. Freeze / Activate              ║");
+            System.out.println("║                                     ║");
+            System.out.println("║  TRANSACTIONS                       ║");
+            System.out.println("║   6. Deposit                        ║");
+            System.out.println("║   7. Withdraw                       ║");
+            System.out.println("║   8. Transfer                       ║");
+            System.out.println("║   9. Transaction History            ║");
+            System.out.println("║                                     ║");
+            System.out.println("║  REPORTS                            ║");
+            System.out.println("║  10. Dashboard                      ║");
+            System.out.println("║  11. Search Accounts                ║");
+            System.out.println("║  12. Daily Activity                 ║");
+            System.out.println("║                                     ║");
+            System.out.println("║  RISK                               ║");
+            System.out.println("║  13. Flag / Unflag Account          ║");
+            System.out.println("║  14. View Flagged                   ║");
+            System.out.println("║                                     ║");
+            System.out.println("║  SYSTEM                             ║");
+            System.out.println("║  15. Apply Interest                 ║");
+            System.out.println("║  16. Apply Fees                     ║");
+            System.out.println("║  17. Save                           ║");
+            System.out.println("║  18. Exit                           ║");
             System.out.println("╚═════════════════════════════════════╝");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-16): ", 1, 16);
+            int choice = InputParser.readInt(scanner, "Choose (1-18): ", 1, 18);
 
             // Guard: most options need a selected account
             if (currentAccount == null && choice >= 2 && choice <= 9) {
@@ -104,30 +106,32 @@ public class Main {
                     String email = scanner.nextLine();
 
                     System.out.println("  Account type:");
-                    System.out.println("    1. Savings  (4.5% interest, no fee)");
-                    System.out.println("    2. Checking (0.1% interest, $4.99/month)");
-                    System.out.println("    3. Business (2% interest, $29.99/month)");
-                    int typeChoice = InputParser.readInt(scanner, "  Choose (1-3): ", 1, 3);
+                    System.out.println("    1. Savings    (4.5% interest, no fee)");
+                    System.out.println("    2. Checking   (0.1% interest, $4.99/month)");
+                    System.out.println("    3. Business   (2% interest, $29.99/month)");
+                    System.out.println("    4. Investment (3.5% interest, $49.99/month)");
+                    int typeChoice = InputParser.readInt(scanner, "  Choose (1-4): ", 1, 4);
 
+                    // 🆕 OCP: Adding Investment required ZERO changes to AccountService
+                    // Just create the type and pass it. The service handles everything.
                     AccountType accountType = switch (typeChoice) {
                         case 1 -> new AccountType.Savings();
                         case 2 -> new AccountType.Checking();
                         case 3 -> new AccountType.Business();
-                        default -> throw new IllegalStateException("Unexpected value: " + typeChoice);
-
+                        case 4 -> new AccountType.Investment();
+                        default -> throw new IllegalStateException("Invalid account type: " + typeChoice);
                     };
 
-                    double deposit = InputParser.readPositiveDouble(scanner,
-                            "  Initial deposit: $");
+                    double deposit = InputParser.readPositiveDouble(scanner, "  Initial deposit: $");
 
                     try {
-                        currentAccount = bankService.openAccount(
-                                name, email, deposit, accountType);
+                        currentAccount = bankService.openAccount(name, email, deposit, accountType);
                     } catch (DuplicateEmailException e) {
                         System.out.println("  ❌ " + e.toDisplayString());
                     } catch (BankException e) {
-                        System.out.println("  ❌  " + e.toDisplayString());
+                        System.out.println("  ❌" + e.toDisplayString());
                     }
+
                 }
 
                 case 2 -> bankService.printAccountReport(currentAccount);
@@ -142,9 +146,7 @@ public class Main {
                             String flag = riskService.isFlagged(all.get(i).getAccountNumber()) ? " 🚩" : "";
                             System.out.println("    " + (i + 1) + ". " + all.get(i) + flag);
                         }
-                        int acc = InputParser.readInt(scanner,
-                                "  Choose (1-" + repository.count() + "): ",
-                                1, repository.count());
+                        int acc = InputParser.readInt(scanner, "  Choose (1-" + repository.count() + "): ", 1, repository.count());
                         currentAccount = repository.getByIndex(acc - 1);
                     }
                 }
@@ -155,8 +157,7 @@ public class Main {
                     try {
                         if (bankService.closeAccount(accNum)) {
                             if (currentAccount.getAccountNumber().equals(accNum)) {
-                                currentAccount = repository.isEmpty()
-                                        ? null : repository.getByIndex(0);
+                                currentAccount = repository.isEmpty() ? null : repository.getByIndex(0);
                             }
                         }
                     } catch (AccountNotFoundException e) {
@@ -165,11 +166,9 @@ public class Main {
                 }
 
                 case 5 -> {
-                    System.out.println("  Current status: "
-                            + currentAccount.getStatus().icon() + " "
-                            + currentAccount.getStatus().description());
+                    System.out.println("  Current status: " + currentAccount.getStatus().icon() + " " + currentAccount.getStatus().description());
 
-                    var validTransitions = new java.util.ArrayList<AccountStatus>();
+                    var validTransitions = new ArrayList<AccountStatus>();
                     for (AccountStatus s : AccountStatus.values()) {
                         if (currentAccount.getStatus().canTransitionTo(s)) {
                             validTransitions.add(s);
@@ -180,17 +179,12 @@ public class Main {
                         System.out.println("  No transitions available (terminal state).");
                     } else {
                         for (int i = 0; i < validTransitions.size(); i++) {
-                            System.out.println("    " + (i + 1) + ". "
-                                    + validTransitions.get(i).icon() + " "
-                                    + validTransitions.get(i).description());
+                            System.out.println("    " + (i + 1) + ". " + validTransitions.get(i).icon() + " " + validTransitions.get(i).description());
                         }
-                        int statusChoice = InputParser.readInt(scanner,
-                                "  Choose: ", 1, validTransitions.size());
+                        int statusChoice = InputParser.readInt(scanner, "  Choose: ", 1, validTransitions.size());
                         try {
                             currentAccount.changeStatus(validTransitions.get(statusChoice - 1));
-                            DataStore.appendLog("STATUS_CHANGE: "
-                                    + currentAccount.getAccountNumber() + " → "
-                                    + currentAccount.getStatus());
+                            DataStore.appendLog("STATUS_CHANGE: " + currentAccount.getAccountNumber() + " → " + currentAccount.getStatus());
                         } catch (InvalidStatusTransitionException e) {
                             System.out.println("  ❌ " + e.toDisplayString());
                         }
@@ -216,8 +210,7 @@ public class Main {
                     System.out.print("  Destination account number: ");
                     String toAccNum = scanner.nextLine().trim().toUpperCase();
                     double amount = InputParser.readPositiveDouble(scanner, "  Amount: $");
-                    bankService.transfer(
-                            currentAccount.getAccountNumber(), toAccNum, amount);
+                    bankService.transfer(currentAccount.getAccountNumber(), toAccNum, amount);
                 }
 
                 case 9 -> currentAccount.printMiniStatement();
@@ -255,9 +248,11 @@ public class Main {
                 // SYSTEM
                 // ═══════════════════════════════════
 
-                case 15 -> bankService.saveAll();
+                case 15 -> bankService.applyMonthlyInterest();
+                case 16 -> bankService.applyMonthlyFees();
+                case 17 -> bankService.saveAll();
 
-                case 16 -> {
+                case 18 -> {
                     System.out.print("  Save before exiting? (y/n): ");
                     if (scanner.nextLine().trim().toLowerCase().startsWith("y")) {
                         bankService.saveAll();

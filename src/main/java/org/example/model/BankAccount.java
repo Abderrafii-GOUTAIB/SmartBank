@@ -37,10 +37,12 @@ public class BankAccount implements Displayable {
     // No more fixed size! No more manual counting!
     private final List<Transaction> transactions;
     private int transactionCount; // 🆕 we can still track count if we want, but it's redundant with transactions.size()
+    private final AccountType accountType;
 
     // --- Constructors (PUBLIC — other packages need to create accounts) ---
 
-    public BankAccount(String ownerName, String email, double initialBalance) {
+    public BankAccount(String ownerName, String email, double initialBalance,
+                       AccountType accountType) {
         if (ownerName == null || ownerName.isBlank()) {
             throw new IllegalArgumentException("Owner name cannot be empty.");
         }
@@ -49,20 +51,20 @@ public class BankAccount implements Displayable {
         }
         this.accountNumber = generateAccountNumber();
         this.ownerName = ownerName;
+        this.email = (email == null) ? "" : email.toLowerCase().trim();
         this.balance = initialBalance;
         this.status = AccountStatus.ACTIVE;
-        this.email = email;
+        this.accountType = accountType;
         this.transactions = new ArrayList<>();
-        this.transactionCount = 0;
         this.createdAt = LocalDateTime.now();
     }
 
-    public BankAccount(String ownerName, String email) {
-        this(ownerName, email, 0.0);
+    public BankAccount(String ownerName, String email, double initialBalance) {
+        this(ownerName, email, initialBalance, new AccountType.Savings());
     }
 
-    public BankAccount(BankAccount other) {
-        this(other.ownerName, other.email, 0.0);
+    public BankAccount(String ownerName, String email) {
+        this(ownerName, email, 0.0, new AccountType.Savings());
     }
 
     // PRIVATE STATIC — internal utility, no one outside needs this
@@ -84,7 +86,8 @@ public class BankAccount implements Displayable {
             throw new InvalidAmountException(accountNumber, amount);
         }
         if (status.cannotTransact()) {
-            throw new AccountFrozenException(accountNumber, status);   }
+            throw new AccountFrozenException(accountNumber, status);
+        }
         balance += amount;
         addTransaction(TransactionType.DEPOSIT, amount);
 
@@ -94,15 +97,58 @@ public class BankAccount implements Displayable {
         if (amount <= 0) {
             throw new InvalidAmountException(accountNumber, amount);
         }
+        if (!status.cannotTransact()) {
+            throw new AccountFrozenException(accountNumber, status);
+        }
+        if (!accountType.isWithinLimit(amount)) {
+            throw new IllegalStateException(String.format(
+                    "Withdrawal $%,.2f exceeds %s limit of $%,.2f",
+                    amount, accountType.displayName(), accountType.withdrawalLimit()));
+        }
         if (amount > balance) {
             throw new InsufficientFundsException(accountNumber, amount, balance);
         }
-        if (status.cannotTransact()) {
-            throw new AccountFrozenException(accountNumber, status);
-
-        }
         balance -= amount;
         addTransaction(TransactionType.WITHDRAWAL, amount);
+    }
+
+
+    public double calculateInterest() {
+        return accountType.calculateInterestRate(balance);
+    }
+
+    // 🆕 Monthly fee
+    public double getMonthlyFee() {
+        return accountType.monthlyFee();
+    }
+
+    // 🆕 Getter
+    public AccountType getAccountType() { return accountType; }
+
+
+    @Override
+    public void displayInfo() {
+        System.out.println("--- Account Details ---");
+        System.out.println("Bank:         " + BANK_NAME);
+        System.out.println("Account #:    " + accountNumber);
+        System.out.println("Owner:        " + ownerName);
+        System.out.println("Email:        " + email);
+        System.out.println("Type:         " + accountType.displayName());
+        System.out.println("Balance:      $" + String.format("%,.2f", balance));
+        System.out.println("Interest:     " + String.format("%.1f%%", accountType.interestRate() * 100));
+        System.out.println("Monthly fee:  $" + String.format("%.2f", accountType.monthlyFee()));
+        System.out.println("Withdraw max: $" + String.format("%,.0f", accountType.withdrawalLimit()));
+        System.out.println("Transactions: " + transactions.size());
+        System.out.println("Status:       " + status.icon() + " " + status.description());
+        System.out.println("Created:      " + getFormattedCreatedAt());
+    }
+
+    // 🆕 Update toString to show type:
+    @Override
+    public String toString() {
+        return String.format("[%s] %s — $%,.2f %s (%s)",
+                accountNumber, ownerName, balance, status.icon(),
+                accountType.displayName());
     }
 
     // PRIVATE — internal bookkeeping, no one outside needs to call this
@@ -206,21 +252,6 @@ public class BankAccount implements Displayable {
         }
     }
 
-    // --- Displayable interface implementation ---
-
-    @Override
-    public void displayInfo() {
-        System.out.println("--- Account Details ---");
-        System.out.println("Bank:         " + BANK_NAME);
-        System.out.println("Account #:    " + accountNumber);
-        System.out.println("Owner:        " + ownerName);
-        System.out.println("Email:        " + email);
-        System.out.println("Balance:      $" + String.format("%.2f", balance));
-        System.out.println("Transactions: " + transactions.size());
-        System.out.println("Status:       " + status.icon() + " " + status.description());
-        System.out.println("Created:      " + getFormattedCreatedAt());  // 🆕
-        System.out.println("Account age:  " + getAccountAge());          // 🆕
-    }
 
     // --- PUBLIC getters — controlled read-only access ---
 
@@ -322,14 +353,11 @@ public class BankAccount implements Displayable {
         // Step 3: Same account number = same account.
         return Objects.equals(this.accountNumber, other.accountNumber);
     }
+
     @Override
     public int hashCode() {
         return Objects.hash(accountNumber);
     }
 
-
-    @Override
-    public String toString() {
-        return String.format("[%s] %s — $%.2f %s", accountNumber, ownerName, balance, status.icon());
-    }
+    
 }

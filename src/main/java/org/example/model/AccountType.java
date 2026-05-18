@@ -1,6 +1,6 @@
 package org.example.model;
 
-public sealed interface AccountType permits AccountType.Savings, AccountType.Checking, AccountType.Business {
+public sealed interface AccountType permits AccountType.Savings, AccountType.Checking, AccountType.Business, AccountType.Investment {
     String displayName();
 
     double interestRate();
@@ -12,6 +12,14 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
     default String summary() {
         return String.format("%s — %.1f%% interest, $%.2f/month fee, $%,.0f withdrawal limit",
                 displayName(), interestRate() * 100, monthlyFee(), withdrawalLimit());
+    }
+
+    default double calculateInterestRate(double balance) {
+        return balance * interestRate();
+    }
+
+    default boolean isWithinLimit(double amount) {
+        return amount <= withdrawalLimit();
     }
 
     record Savings(double interestRate) implements AccountType {
@@ -77,6 +85,26 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
         @Override
         public double withdrawalLimit() {
             return 500_000;
+        }
+    }
+
+    record Investment(double interestRate, double monthlyFee) implements AccountType {
+        public Investment() {
+            this(0.035, 49.99);
+        }
+
+        @Override
+        public String displayName() {
+            return "Investment";
+        }
+
+        @Override
+        public double withdrawalLimit() {
+            return 100_000;
+        }
+
+        public int lockPeriodMonths() {
+            return 12;
         }
     }
 }
