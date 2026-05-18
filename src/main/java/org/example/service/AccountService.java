@@ -27,9 +27,15 @@ public class AccountService {
                                    AccountType accountType) {
         String normalizedEmail = email == null ? "" : email.toLowerCase().trim();
 
+        if (repository.ownerNameExists(ownerName)) {
+            throw new DuplicateNameException(ownerName);
+        }
+
         if (repository.emailExists(normalizedEmail)) {
             throw new DuplicateEmailException(normalizedEmail);
         }
+
+
 
         BankAccount account = new BankAccount(ownerName, normalizedEmail, initialDeposit);
         repository.save(account);

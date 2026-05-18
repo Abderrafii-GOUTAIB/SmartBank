@@ -30,7 +30,7 @@ public class Main {
         if (repository.isEmpty()) {
             System.out.println("--- Welcome! Creating starter accounts ---");
             try {
-                bankService.openAccount("Abderrafii", "abderrafii@gmail.com", 50000, new AccountType.Savings());
+                bankService.openAccount("Abderrafii", "abderrafii@goutaib.com", 50000, new AccountType.Savings());
                 bankService.openAccount("Bob Smith", "bob@smith.com", 800.50, new AccountType.Checking());
                 bankService.openAccount("Carol Davis", "carol@davis.com", 15000, new AccountType.Business());
             } catch (BankException e) {
@@ -99,26 +99,29 @@ public class Main {
                 // ACCOUNTS
                 // ═══════════════════════════════════
 
+
                 case 1 -> {
                     System.out.print("  Owner name: ");
                     String name = scanner.nextLine();
                     System.out.print("  Email: ");
                     String email = scanner.nextLine();
 
+
                     System.out.println("  Account type:");
                     System.out.println("    1. Savings    (4.5% interest, no fee)");
                     System.out.println("    2. Checking   (0.1% interest, $4.99/month)");
                     System.out.println("    3. Business   (2% interest, $29.99/month)");
                     System.out.println("    4. Investment (3.5% interest, $49.99/month)");
-                    int typeChoice = InputParser.readInt(scanner, "  Choose (1-4): ", 1, 4);
+                    System.out.println("    5. Premium    (6% interest, $99.99/month) [NEW!]");
+                    int typeChoice = InputParser.readInt(scanner, "  Choose (1-5): ", 1, 5);
 
-                    // 🆕 OCP: Adding Investment required ZERO changes to AccountService
-                    // Just create the type and pass it. The service handles everything.
+
                     AccountType accountType = switch (typeChoice) {
                         case 1 -> new AccountType.Savings();
                         case 2 -> new AccountType.Checking();
                         case 3 -> new AccountType.Business();
                         case 4 -> new AccountType.Investment();
+                        case 5 -> new AccountType.Premium();
                         default -> throw new IllegalStateException("Invalid account type: " + typeChoice);
                     };
 
@@ -126,12 +129,15 @@ public class Main {
 
                     try {
                         currentAccount = bankService.openAccount(name, email, deposit, accountType);
+                    } catch (DuplicateNameException e) {
+                        System.out.println("  ❌ " + e.getMessage());
+                        System.out.println("  Please enter a different name.");
                     } catch (DuplicateEmailException e) {
-                        System.out.println("  ❌ " + e.toDisplayString());
+                        System.out.println("  ❌ " + e.getMessage());
+                        System.out.println("  Please enter a different email address");
                     } catch (BankException e) {
                         System.out.println("  ❌" + e.toDisplayString());
                     }
-
                 }
 
                 case 2 -> bankService.printAccountReport(currentAccount);

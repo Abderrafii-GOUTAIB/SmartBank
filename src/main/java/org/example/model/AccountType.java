@@ -1,6 +1,6 @@
 package org.example.model;
 
-public sealed interface AccountType permits AccountType.Savings, AccountType.Checking, AccountType.Business, AccountType.Investment {
+public sealed interface AccountType permits AccountType.Savings, AccountType.Checking, AccountType.Business, AccountType.Investment, AccountType.Premium {
     String displayName();
 
     double interestRate();
@@ -22,15 +22,17 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
         return amount <= withdrawalLimit();
     }
 
+
     record Savings(double interestRate) implements AccountType {
         public Savings {
             if (interestRate < 0 || interestRate > 0.5) {
-                throw new IllegalArgumentException("Interest rate must be 0-50%");
+                throw new IllegalArgumentException("Interest rate must be between 0 and 0.5 (0% - 50%)");
             }
         }
 
         // Default savings parameters
         public Savings() {
+
             this(0.045);
         } // 4.5% default
 
@@ -51,6 +53,13 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
     }
 
     record Checking(double monthlyFee) implements AccountType {
+        public Checking {
+            if (monthlyFee < 0) {
+                throw new IllegalArgumentException(
+                        "Checking fee cannot be negative, got $" + monthlyFee);
+            }
+        }
+
         public Checking() {
             this(4.99);
         }
@@ -73,6 +82,15 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
     }
 
     record Business(double interestRate, double monthlyFee) implements AccountType {
+        public Business {
+            if (interestRate < 0 || interestRate > 0.5)
+                throw new IllegalArgumentException(
+                        "Business interest rate must be 0-50%, got " + (interestRate * 100) + "%");
+            if (monthlyFee < 0)
+                throw new IllegalArgumentException(
+                        "Business fee cannot be negative, got $" + monthlyFee);
+        }
+
         public Business() {
             this(0.02, 29.99);
         } // 2%, $29.99/month
@@ -89,6 +107,15 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
     }
 
     record Investment(double interestRate, double monthlyFee) implements AccountType {
+        public Investment {
+            if (interestRate < 0 || interestRate > 0.5)
+                throw new IllegalArgumentException(
+                        "Investment interest rate must be 0-50%, got " + (interestRate * 100) + "%");
+            if (monthlyFee < 0)
+                throw new IllegalArgumentException(
+                        "Investment fee cannot be negative, got $" + monthlyFee);
+        }
+
         public Investment() {
             this(0.035, 49.99);
         }
@@ -107,4 +134,40 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
             return 12;
         }
     }
+
+    record Premium(double interestRate, double monthlyFee, double withdrawalLimit) implements AccountType {
+        public Premium {
+            if (interestRate < 0 || interestRate > 0.5)
+                throw new IllegalArgumentException("Premium interest rate must be 0-50%, got " + (interestRate * 100) + "%");
+            if (monthlyFee < 0)
+                throw new IllegalArgumentException("Premium fee cannot be negative, got $" + monthlyFee);
+            if (withdrawalLimit <= 0)
+                throw new IllegalArgumentException("Premium withdrawal limit must be positive, got $" + withdrawalLimit);
+        }
+
+        public Premium() {
+            this(0.06, 99.99, 1_000_000);
+        }
+
+        @Override
+        public String displayName() {
+            return "Premium";
+        }
+
+        @Override
+        public double interestRate() {
+            return interestRate;
+        }
+
+        @Override
+        public double monthlyFee() {
+            return monthlyFee;
+        }
+
+        @Override
+        public double withdrawalLimit() {
+            return withdrawalLimit;
+        }
+    }
 }
+

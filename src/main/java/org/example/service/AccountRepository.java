@@ -10,11 +10,13 @@ public class AccountRepository {
     private final List<BankAccount> accounts;
     private final Map<String, BankAccount> accountMap;
     private final Set<String> registeredEmails;
+    private final Set<String> registeredOwnerNames;
 
     public AccountRepository() {
         this.accounts = new ArrayList<>();
         this.accountMap = new HashMap<>();
         this.registeredEmails = new HashSet<>();
+        this.registeredOwnerNames = new HashSet<>();
     }
 
     // --- Store ---
@@ -22,15 +24,15 @@ public class AccountRepository {
     public void save(BankAccount account) {
         accounts.add(account);
         accountMap.put(account.getAccountNumber(), account);
-        if (account.getEmail() != null && !account.getEmail().isBlank()) {
-            registeredEmails.add(account.getEmail().toLowerCase());
-        }
+        Optional.ofNullable(account.getOwnerName()).map(String::trim).filter(s -> !s.isBlank()).ifPresent(s -> registeredOwnerNames.add(s.toLowerCase()));
+        Optional.ofNullable(account.getEmail()).map(String::trim).filter(s -> !s.isBlank()).ifPresent(s -> registeredEmails.add(s.toLowerCase()));
     }
 
     public void remove(BankAccount account) {
         accounts.remove(account);
         accountMap.remove(account.getAccountNumber());
         registeredEmails.remove(account.getEmail());
+        registeredOwnerNames.remove(account.getOwnerName());
     }
 
     // --- Find ---
@@ -55,10 +57,7 @@ public class AccountRepository {
     }
 
     public List<BankAccount> searchByName(String searchTerm) {
-        return accounts.stream()
-                .filter(acc -> acc.getOwnerName().toLowerCase()
-                        .contains(searchTerm.toLowerCase()))
-                .toList();
+        return accounts.stream().filter(acc -> acc.getOwnerName().toLowerCase().contains(searchTerm.toLowerCase())).toList();
     }
 
     // --- Query ---
@@ -69,6 +68,10 @@ public class AccountRepository {
 
     public boolean accountExists(String accountNumber) {
         return accountMap.containsKey(accountNumber);
+    }
+
+    public boolean ownerNameExists(String ownerName) {
+        return registeredOwnerNames.contains(ownerName.toLowerCase().trim());
     }
 
     public int count() {
