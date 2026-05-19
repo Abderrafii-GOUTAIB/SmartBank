@@ -4,6 +4,7 @@ import org.example.model.exception.AccountFrozenException;
 import org.example.model.exception.InsufficientFundsException;
 import org.example.model.exception.InvalidAmountException;
 import org.example.model.exception.InvalidStatusTransitionException;
+import org.example.service.BankConfig;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,7 +25,7 @@ public class BankAccount implements Displayable {
     private static int nextId = 1;
 
     // PUBLIC STATIC FINAL — everyone can READ the bank name, no one can change it
-    public static final String BANK_NAME = "SmartBank";
+    public static final String BANK_NAME = BankConfig.getInstance().getBankName();
 
     // PRIVATE — only this class touches these directly
     // Outside code uses getters (controlled access)

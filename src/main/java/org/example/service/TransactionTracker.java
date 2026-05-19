@@ -1,16 +1,20 @@
 package org.example.service;
 
 import org.example.model.BankAccount;
-import org.example.model.Transaction;
 import org.example.model.TransactionType;
+import org.example.model.exception.DailyLimitExceededException;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
 
 public class TransactionTracker {
 
     private final Map<String, Double> dailyDeposits;
     private final Set<String> transactionCategories;
+    private final int MAX_TRANSACTION_PER_DAY = BankConfig.getInstance().getMaxTransactionsPerDay();
 
     public TransactionTracker() {
         this.dailyDeposits = new HashMap<>();
@@ -20,6 +24,11 @@ public class TransactionTracker {
     // --- Recording ---
 
     public void recordDeposit(String accountNumber, double amount) {
+        long todayCount = dailyDeposits.getOrDefault(accountNumber, 0.0) > 0 ? 1 : 0;
+        if (todayCount >= MAX_TRANSACTION_PER_DAY) {
+            throw new DailyLimitExceededException(accountNumber, amount,
+                    BankConfig.getInstance().getMaxTransactionsPerDay(), todayCount);
+        }
         dailyDeposits.merge(accountNumber, amount, Double::sum);
     }
 

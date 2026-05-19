@@ -44,10 +44,10 @@
 ✅ Step 32: Object Contract (equals, hashCode, toString)
 ✅ Step 33: SOLID — Single Responsibility
 ✅ Step 34: SOLID — Open/Closed
-→  Step 35: SOLID — Liskov Substitution
-⬜ Step 36: SOLID — Interface Segregation
-⬜ Step 37: SOLID — Dependency Inversion
-⬜ Step 38: Pattern — Singleton
+✅ Step 35: SOLID — Liskov Substitution
+✅ Step 36: SOLID — Interface Segregation
+✅ Step 37: SOLID — Dependency Inversion
+→  Step 38: Pattern — Singleton
 ⬜ Step 39: Pattern — Factory
 ⬜ Step 40: Pattern — Builder
 ⬜ Step 41: Pattern — Observer

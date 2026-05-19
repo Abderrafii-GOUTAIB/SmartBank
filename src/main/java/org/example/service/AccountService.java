@@ -12,29 +12,29 @@ public class AccountService {
     private final AccountRepository repository;
     private final RiskService riskService;
     private final TransactionTracker tracker;
+    private final StoragePort storage;
+    private final Double MINIMUM_OPENING_DEPOSIT = BankConfig.getInstance().getMinimumOpeningDeposit();
 
     public AccountService(AccountRepository repository,
                           RiskService riskService,
-                          TransactionTracker tracker) {
+                          TransactionTracker tracker, StoragePort storage) {
         this.repository = repository;
         this.riskService = riskService;
         this.tracker = tracker;
+        this.storage = storage;
     }
 
     // --- Account Creation ---
 
     public BankAccount openAccount(String ownerName, String email, double initialDeposit,
                                    AccountType accountType) {
+        if (initialDeposit < MINIMUM_OPENING_DEPOSIT) {
+            throw new InvalidAmountException(null, initialDeposit);
+        }
         String normalizedEmail = email == null ? "" : email.toLowerCase().trim();
 
-        if (repository.ownerNameExists(ownerName)) {
-            throw new DuplicateNameException(ownerName);
-        }
-
-        if (repository.emailExists(normalizedEmail)) {
-            throw new DuplicateEmailException(normalizedEmail);
-        }
-
+        if (repository.ownerNameExists(ownerName)) throw new DuplicateNameException(ownerName);
+        if (repository.emailExists(normalizedEmail)) throw new DuplicateEmailException(normalizedEmail);
 
 
         BankAccount account = new BankAccount(ownerName, normalizedEmail, initialDeposit);
@@ -45,7 +45,7 @@ public class AccountService {
                 + " (" + String.format("%.1f%%", accountType.interestRate() * 100)
                 + " interest, $" + String.format("%.2f", accountType.monthlyFee()) + "/month)");
 
-        DataStore.appendLog("ACCOUNT_OPENED: " + account.getAccountNumber()
+        storage.logAudit("ACCOUNT_OPENED: " + account.getAccountNumber()  // ← replaced
                 + " " + ownerName + " " + accountType.displayName());
 
         return account;
@@ -153,8 +153,7 @@ public class AccountService {
 
             System.out.println("  " + result.toDisplayString());
 
-            DataStore.appendLog("TRANSFER: $" + amount + " "
-                    + fromAccNum + " → " + toAccNum);
+            storage.logAudit("TRANSFER: $" + amount + " " + fromAccNum + " → " + toAccNum);
 
             return result;
 
@@ -187,7 +186,7 @@ public class AccountService {
         riskService.unflag(accountNumber);
 
         System.out.println("  🗑️  Account " + accountNumber + " closed.");
-        DataStore.appendLog("ACCOUNT_CLOSED: " + accountNumber);
+        storage.logAudit("ACCOUNT_CLOSED: " + accountNumber); // ← replaced
         return true;
     }
 
@@ -304,22 +303,22 @@ public class AccountService {
     public void saveAll() {
         try {
             List<BankAccount> all = repository.getAll();
-            DataStore.saveAccounts(all);
-            DataStore.saveTransactions(all);
-            DataStore.saveFlagged(riskService.getFlaggedAccounts());
+            storage.saveState(all);                                         // ← replaces 2 static calls
+            storage.saveFlaggedAccounts(riskService.getFlaggedAccounts());  // ← replaces 1 static call
+
             System.out.println("  ✅ All data saved.");
-        } catch (Exception e) {
+        } catch (StorageException e) {
             System.out.println("  ❌ Save failed: " + e.getMessage());
         }
     }
 
     public void loadAll() {
         try {
-            var loaded = DataStore.loadAccounts();
+            List<BankAccount> loaded = storage.loadAccounts();
             if (!loaded.isEmpty()) {
                 repository.clear();
                 repository.saveAll(loaded);
-                riskService.loadFlags(DataStore.loadFlagged());
+                riskService.loadFlags(storage.loadFlaggedAccounts());
             }
         } catch (Exception e) {
             System.out.println("  ❌ Load failed: " + e.getMessage());
@@ -374,7 +373,8 @@ public class AccountService {
         }
 
         System.out.printf("  Total interest applied: $%,.2f%n", totalInterest);
-        DataStore.appendLog("INTEREST_APPLIED: $" + String.format("%.2f", totalInterest));
+        storage.logAudit("INTEREST_APPLIED: $" + String.format("%.2f", totalInterest)); // ← replaced
+
     }
 
     public void applyMonthlyFees() {
@@ -412,6 +412,7 @@ public class AccountService {
         }
 
         System.out.printf("  Total fees collected: $%,.2f%n", totalFees);
-        DataStore.appendLog("FEES_APPLIED: $" + String.format("%.2f", totalFees));
+        storage.logAudit("FEES_APPLIED: $" + String.format("%.2f", totalFees)); // ← replaced
+
     }
 }

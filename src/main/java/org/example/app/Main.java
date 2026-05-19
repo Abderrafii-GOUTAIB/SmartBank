@@ -13,16 +13,14 @@ public class Main {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-
-        // Wiring — each service has ONE job, assembled here
+        StoragePort storage = new DataStore();
         AccountRepository repository = new AccountRepository();
-        RiskService riskService = new RiskService();
+        RiskService riskService = new RiskService(storage);
         TransactionTracker tracker = new TransactionTracker();
-        AccountService bankService = new AccountService(repository, riskService, tracker);
+        AccountService bankService = new AccountService(repository, riskService, tracker, storage);
 
         System.out.println("=== " + BankAccount.BANK_NAME + " ===");
         System.out.println();
-
         // Load saved data (if any)
         bankService.loadAll();
 
@@ -190,7 +188,9 @@ public class Main {
                         int statusChoice = InputParser.readInt(scanner, "  Choose: ", 1, validTransitions.size());
                         try {
                             currentAccount.changeStatus(validTransitions.get(statusChoice - 1));
-                            DataStore.appendLog("STATUS_CHANGE: " + currentAccount.getAccountNumber() + " → " + currentAccount.getStatus());
+                            storage.logAudit("STATUS_CHANGE: "                    // ← was DataStore.appendLog
+                                    + currentAccount.getAccountNumber()
+                                    + " → " + currentAccount.getStatus());
                         } catch (InvalidStatusTransitionException e) {
                             System.out.println("  ❌ " + e.toDisplayString());
                         }
@@ -241,7 +241,7 @@ public class Main {
                 case 13 -> {
                     System.out.println("  1. Flag account");
                     System.out.println("  2. Unflag account");
-                    int flagChoice = service.InputParser.readInt(scanner, "  Choose: ", 1, 2);
+                    int flagChoice = InputParser.readInt(scanner, "  Choose: ", 1, 2);
                     System.out.print("  Account number: ");
                     String accNum = scanner.nextLine().trim().toUpperCase();
                     if (flagChoice == 1) riskService.flag(accNum);

@@ -3,6 +3,7 @@ package org.example.service;
 import org.example.model.AccountStatus;
 import org.example.model.BankAccount;
 import org.example.model.Transaction;
+import org.example.model.exception.StorageException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,15 +13,17 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-public class DataStore {
-    private static final Path DATA_DIR = Path.of("smartbank-data");
-    private static final Path ACCOUNTS_FILE = DATA_DIR.resolve("accounts.dat");
+public class DataStore implements StoragePort {
+
+    private static final Path DATA_DIR          = Path.of("smartbank-data");
+    private static final Path ACCOUNTS_FILE     = DATA_DIR.resolve("accounts.dat");
     private static final Path TRANSACTIONS_FILE = DATA_DIR.resolve("transactions.dat");
-    private static final Path FLAGGED_FILE = DATA_DIR.resolve("flagged.dat");
+    private static final Path FLAGGED_FILE      = DATA_DIR.resolve("flagged.dat");
+    private static final String DELIMITER       = "|";
 
-    // Delimiter — the character that separates fields in each line
-    private static final String DELIMITER = "|";
+    // ── INITIALIZATION ────────────────────────────────────────────────────────
 
     public static void initialize() throws IOException {
         if (!Files.exists(DATA_DIR)) {
@@ -29,166 +32,75 @@ public class DataStore {
         }
     }
 
+    // ── STATIC SAVE METHODS ───────────────────────────────────────────────────
+
     public static void saveAccounts(List<BankAccount> accounts) throws IOException {
         initialize();
-        StringBuilder builder = new StringBuilder();
-        for (BankAccount account : accounts) {
-            // Format: accountNumber|ownerName|balance|status|transactionCount
-            builder.append(String.join(DELIMITER,
-                    account.getAccountNumber(),
-                    account.getOwnerName(),
-                    account.getEmail(),
-                    String.format("%.2f", account.getBalance()),
-                    account.getStatus().name(),
-                    account.getCreatedAt().format(Transaction.FILE_FORMAT),  // 🆕 save creation date
-                    String.valueOf(account.getTransactionCount())
-            ));
-            builder.append(System.lineSeparator());
-        }
-        Files.writeString(ACCOUNTS_FILE, builder.toString(),
+        String content = accounts.stream()
+                .map(acc -> String.join(DELIMITER,
+                        acc.getAccountNumber(),
+                        acc.getOwnerName(),
+                        acc.getEmail(),
+                        String.format("%.2f", acc.getBalance()),
+                        acc.getStatus().name(),
+                        acc.getCreatedAt().format(Transaction.FILE_FORMAT),
+                        String.valueOf(acc.getTransactionCount())
+                ))
+                .collect(Collectors.joining(System.lineSeparator()));
+
+        Files.writeString(ACCOUNTS_FILE, content + System.lineSeparator(),
                 StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         System.out.println("💾 Saved " + accounts.size() + " account(s) to " + ACCOUNTS_FILE);
     }
-    public static List<BankAccount> loadAccounts() throws IOException {
-        List<BankAccount> accounts = new ArrayList<>();
 
-        // Check if file exists first — first run won't have data
-        if (!Files.exists(ACCOUNTS_FILE)) {
-            System.out.println("ℹ️  No saved data found. Starting fresh.");
-            return accounts; // empty list
-        }
-
-        // Files.readAllLines — reads EVERY line into a List<String>
-        // For huge files use Files.lines() with streams (Phase 3)
-        List<String> lines = Files.readAllLines(ACCOUNTS_FILE);
-
-        for (String line : lines) {
-            // Skip empty lines
-            if (line.isBlank()) continue;
-
-            try {
-                // Split by delimiter — "ACC-0001|Alice|alice@mail.com|2500.75|ACTIVE"
-                // becomes ["ACC-0001", "Alice", "alice@mail.com", "2500.75", "ACTIVE"]
-                String[] parts = line.split("\\|"); // pipe needs escaping in regex
-
-                if (parts.length < 5) {
-                    System.out.println("⚠️  Skipping malformed line: " + line);
-                    continue;
-                }
-
-                String accNum   = parts[0];
-                String name     = parts[1];
-                String email    = parts[2];
-                double balance  = Double.parseDouble(parts[3]);
-                String statusStr = parts[4];
-
-                // Create account with loaded data
-                BankAccount acc = new BankAccount(name, email, balance);
-
-                // Restore status from saved enum name
-                // AccountStatus.valueOf("FROZEN") → AccountStatus.FROZEN
-                AccountStatus savedStatus = AccountStatus.valueOf(statusStr);
-                if (savedStatus != AccountStatus.ACTIVE) {
-                    // Account was created as ACTIVE, so only change if different
-                    // We need to go through valid transitions
-                    try {
-                        if (savedStatus == AccountStatus.FROZEN) {
-                            acc.freeze();
-                        } else if (savedStatus == AccountStatus.CLOSED) {
-                            acc.close();
-                        }
-                    } catch (IllegalStateException e) {
-                        System.out.println("⚠️  Could not restore status for " + accNum);
-                    }
-                }
-
-                accounts.add(acc);
-
-            } catch (Exception e) {
-                System.out.println("⚠️  Error parsing line: " + line + " — " + e.getMessage());
-            }
-        }
-
-        System.out.println("📂 Loaded " + accounts.size() + " accounts from " + ACCOUNTS_FILE);
-        return accounts;
-    }
     public static void saveTransactions(List<BankAccount> accounts) throws IOException {
         initialize();
-
-        StringBuilder sb = new StringBuilder();
-
-        for (BankAccount acc : accounts) {
-            for (Transaction txn : acc.getTransactions()) {
-                sb.append(String.join(DELIMITER,
+        // flatMap — flatten all accounts' transactions into one stream (Phase 3)
+        String content = accounts.stream()
+                .flatMap(acc -> acc.getTransactions().stream())
+                .map(txn -> String.join(DELIMITER,
                         txn.getAccountNumber(),
-                        txn.getType().name(),         // DEPOSIT, WITHDRAWAL, etc.
+                        txn.getType().name(),
                         String.valueOf(txn.getAmount()),
                         String.valueOf(txn.getBalanceAfter()),
-                        txn.getFileDateTime()  // 🆕 save creation date
-                ));
-                sb.append(System.lineSeparator());
-            }
-        }
+                        txn.getFileDateTime()
+                ))
+                .collect(Collectors.joining(System.lineSeparator()));
 
-        Files.writeString(TRANSACTIONS_FILE, sb.toString(),
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING);
+        Files.writeString(TRANSACTIONS_FILE, content + System.lineSeparator(),
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
-        int totalTxns = accounts.stream()
-                .mapToInt(BankAccount::getTransactionCount)
-                .sum();
+        int totalTxns = accounts.stream().mapToInt(BankAccount::getTransactionCount).sum();
         System.out.println("💾 Saved " + totalTxns + " transactions to " + TRANSACTIONS_FILE);
     }
 
     public static void saveFlagged(Set<String> flaggedAccounts) throws IOException {
         initialize();
-        // String.join with newline — each flagged account number on its own line
         String content = String.join(System.lineSeparator(), flaggedAccounts);
-
         Files.writeString(FLAGGED_FILE, content,
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING);
-
+                StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         System.out.println("💾 Saved " + flaggedAccounts.size() + " flagged accounts");
     }
-    public static Set<String> loadFlagged() throws IOException {
-        Set<String> flagged = new LinkedHashSet<>();
 
-        if (!Files.exists(FLAGGED_FILE)) {
-            System.out.println("ℹ️  No flagged accounts found. Starting with empty set.");
-            return flagged;
-        }
+    // ── STATIC UTILITY METHODS ────────────────────────────────────────────────
 
-        List<String> lines = Files.readAllLines(FLAGGED_FILE);
-        for (String line : lines) {
-            if (!line.isBlank()) {
-                flagged.add(line.trim());
-            }
-        }
-
-        System.out.println("📂 Loaded " + flagged.size() + " flagged accounts");
-        return flagged;
-    }
-
-    public static void saveAll(AccountManager manager) {
+    public static void appendLog(String message) {
+        // logAudit must never crash the app — silently fail on error
         try {
-            List<BankAccount> accounts = manager.getAllAccounts();
-            saveAccounts(accounts);
-            saveTransactions(accounts);
-
-            // We need access to flagged accounts — let's add a getter
-            // For now, save what we can
-            System.out.println("✅ All data saved successfully.");
-
+            initialize();
+            Path logFile = DATA_DIR.resolve("audit.log");
+            String logLine = System.currentTimeMillis() + DELIMITER + message
+                    + System.lineSeparator();
+            Files.writeString(logFile, logLine,
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
-            System.out.println("❌ Error saving data: " + e.getMessage());
+            System.err.println("Warning: could not write to audit log");
         }
     }
 
     public static void printFileInfo() {
         System.out.println();
         System.out.println("--- Data Files ---");
-
         printSingleFileInfo(ACCOUNTS_FILE);
         printSingleFileInfo(TRANSACTIONS_FILE);
         printSingleFileInfo(FLAGGED_FILE);
@@ -197,9 +109,7 @@ public class DataStore {
     private static void printSingleFileInfo(Path path) {
         try {
             if (Files.exists(path)) {
-                // Files.size() returns file size in bytes
-                long size = Files.size(path);
-                // Files.readAllLines().size() gives line count
+                long size  = Files.size(path);
                 long lines = Files.readAllLines(path).size();
                 System.out.printf("  %-25s %,d bytes  (%d records)%n",
                         path.getFileName(), size, lines);
@@ -213,40 +123,119 @@ public class DataStore {
 
     public static void deleteAll() {
         try {
-            if (Files.exists(ACCOUNTS_FILE))     Files.delete(ACCOUNTS_FILE);
-            if (Files.exists(TRANSACTIONS_FILE)) Files.delete(TRANSACTIONS_FILE);
-            if (Files.exists(FLAGGED_FILE))      Files.delete(FLAGGED_FILE);
+            if (Files.exists(ACCOUNTS_FILE))      Files.delete(ACCOUNTS_FILE);
+            if (Files.exists(TRANSACTIONS_FILE))   Files.delete(TRANSACTIONS_FILE);
+            if (Files.exists(FLAGGED_FILE))        Files.delete(FLAGGED_FILE);
             System.out.println("🗑️  All data files deleted.");
         } catch (IOException e) {
             System.out.println("❌ Error deleting files: " + e.getMessage());
         }
     }
 
-    // ==================================================
-    // APPEND — add a single line to a file (for logging)
-    // ==================================================
+    // ── StoragePort IMPLEMENTATION ────────────────────────────────────────────
 
-    public static void appendLog(String message) {
+    @Override
+    public void saveState(List<BankAccount> accounts) {
         try {
-            initialize();
-            Path logFile = DATA_DIR.resolve("audit.log");
-
-            // APPEND = add to the end (don't overwrite)
-            // CREATE = create if it doesn't exist
-            String logLine = System.currentTimeMillis() + DELIMITER + message
-                    + System.lineSeparator();
-
-            Files.writeString(logFile, logLine,
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.APPEND);
-
+            saveAccounts(accounts);
+            saveTransactions(accounts);
         } catch (IOException e) {
-            // Logging should never crash the app — silently fail
-            System.err.println("Warning: could not write to audit log");
+            throw new StorageException("Failed to save bank state", e);
         }
     }
 
+    @Override
+    public void saveFlaggedAccounts(Set<String> flagged) {
+        try {
+            saveFlagged(flagged);
+        } catch (IOException e) {
+            throw new StorageException("Failed to save flagged accounts", e);
+        }
+    }
+
+    @Override
+    public void logAudit(String entry) {
+        appendLog(entry); // silent fail by design — logging never crashes the app
+    }
+
+    @Override
+    public String exportTransactionsCSV(List<Transaction> transactions, String accountNumber) {
+        try {
+            initialize();
+            Path csvFile = DATA_DIR.resolve("transactions_" + accountNumber + ".csv");
+            String header = "id,type,amount,balanceAfter,dateTime";
+            String rows = transactions.stream()
+                    .map(t -> String.join(",",
+                            String.valueOf(t.getId()),
+                            t.getType().name(),
+                            String.valueOf(t.getAmount()),
+                            String.valueOf(t.getBalanceAfter()),
+                            t.getFileDateTime()
+                    ))
+                    .collect(Collectors.joining("\n"));
+            Files.writeString(csvFile, header + "\n" + rows,
+                    StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            System.out.println("📄 Exported to " + csvFile);
+            return csvFile.toString();
+        } catch (IOException e) {
+            throw new StorageException("Failed to export CSV for " + accountNumber, e);
+        }
+    }
+
+    @Override
+    public List<BankAccount> loadAccounts() {
+        List<BankAccount> accounts = new ArrayList<>();
+        if (!Files.exists(ACCOUNTS_FILE)) {
+            System.out.println("ℹ️  No saved data found. Starting fresh.");
+            return accounts;
+        }
+        try {
+            List<String> lines = Files.readAllLines(ACCOUNTS_FILE);
+            for (String line : lines) {
+                if (line.isBlank()) continue;
+                try {
+                    String[] parts = line.split("\\|");
+                    if (parts.length < 5) {
+                        System.out.println("⚠️  Skipping malformed line: " + line);
+                        continue;
+                    }
+                    String name          = parts[1];
+                    String email         = parts[2];
+                    double balance       = Double.parseDouble(parts[3]);
+                    AccountStatus status = AccountStatus.valueOf(parts[4]);
+
+                    BankAccount acc = new BankAccount(name, email, balance);
+                    if (status == AccountStatus.FROZEN) acc.freeze();
+                    else if (status == AccountStatus.CLOSED) acc.close();
+                    accounts.add(acc);
+                } catch (Exception e) {
+                    System.out.println("⚠️  Error parsing line: " + line + " — " + e.getMessage());
+                }
+            }
+            System.out.println("📂 Loaded " + accounts.size() + " accounts from " + ACCOUNTS_FILE);
+        } catch (IOException e) {
+            throw new StorageException("Failed to load accounts", e);
+        }
+        return accounts;
+    }
+
+    @Override
+    public Set<String> loadFlaggedAccounts() {
+        Set<String> flagged = new LinkedHashSet<>();
+        if (!Files.exists(FLAGGED_FILE)) {
+            System.out.println("ℹ️  No flagged accounts found. Starting with empty set.");
+            return flagged;
+        }
+        try {
+            // stream + filter + map + forEach — Phase 3 applied to file loading
+            Files.readAllLines(FLAGGED_FILE).stream()
+                    .filter(line -> !line.isBlank())
+                    .map(String::trim)
+                    .forEach(flagged::add);
+            System.out.println("📂 Loaded " + flagged.size() + " flagged accounts");
+        } catch (IOException e) {
+            throw new StorageException("Failed to load flagged accounts", e);
+        }
+        return flagged;
+    }
 }
-
-
-
