@@ -18,8 +18,10 @@ public class Main {
         RiskService riskService = new RiskService(storage);
         TransactionTracker tracker = new TransactionTracker();
         AccountService bankService = new AccountService(repository, riskService, tracker, storage);
+        String BANK_NAME = BankConfig.getInstance().getBankName();
+        int AVAILABLE_ACCOUNT_TYPES = AccountTypeChoice.values().length;
 
-        System.out.println("=== " + BankAccount.BANK_NAME + " ===");
+        System.out.println("=== " + BANK_NAME + " ===");
         System.out.println();
         // Load saved data (if any)
         bankService.loadAll();
@@ -106,22 +108,11 @@ public class Main {
 
 
                     System.out.println("  Account type:");
-                    System.out.println("    1. Savings    (4.5% interest, no fee)");
-                    System.out.println("    2. Checking   (0.1% interest, $4.99/month)");
-                    System.out.println("    3. Business   (2% interest, $29.99/month)");
-                    System.out.println("    4. Investment (3.5% interest, $49.99/month)");
-                    System.out.println("    5. Premium    (6% interest, $99.99/month) [NEW!]");
-                    int typeChoice = InputParser.readInt(scanner, "  Choose (1-5): ", 1, 5);
+                    AccountTypeFactory.getMenuLines().forEach(System.out::println);
+                    int typeChoice = InputParser.readInt(scanner, "  Choose (1-" + AVAILABLE_ACCOUNT_TYPES + "): ", 1, AVAILABLE_ACCOUNT_TYPES);
 
 
-                    AccountType accountType = switch (typeChoice) {
-                        case 1 -> new AccountType.Savings();
-                        case 2 -> new AccountType.Checking();
-                        case 3 -> new AccountType.Business();
-                        case 4 -> new AccountType.Investment();
-                        case 5 -> new AccountType.Premium();
-                        default -> throw new IllegalStateException("Invalid account type: " + typeChoice);
-                    };
+                    AccountType accountType = AccountTypeFactory.create(typeChoice);
 
                     double deposit = InputParser.readPositiveDouble(scanner, "  Initial deposit: $");
 

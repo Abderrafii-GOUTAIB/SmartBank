@@ -1,5 +1,8 @@
 package org.example.service;
 
+import org.example.model.AccountType;
+import org.example.model.AccountTypeChoice;
+
 /**
  * Singleton — one config object for the entire bank.
  * Centralizes all bank-wide constants in one place.
@@ -21,6 +24,7 @@ public class BankConfig {
     private final double  largeTransactionThreshold;
     private final double  minimumOpeningDeposit;
     private final int     maxTransactionsPerDay;
+    private final int availableAccountTypes;
 
     // ── PRIVATE CONSTRUCTOR ───────────────────────────────────────────────────
     // private = nobody can call new BankConfig() from outside
@@ -30,6 +34,7 @@ public class BankConfig {
         this.largeTransactionThreshold = 10_000;
         this.minimumOpeningDeposit     = 0;
         this.maxTransactionsPerDay     = 100;
+        this.availableAccountTypes   = AccountTypeChoice.values().length;
     }
 
     // ── THE GATE ──────────────────────────────────────────────────────────────
@@ -57,6 +62,7 @@ public class BankConfig {
     public double getLargeTransactionThreshold() { return largeTransactionThreshold; }
     public double getMinimumOpeningDeposit()     { return minimumOpeningDeposit; }
     public int    getMaxTransactionsPerDay()     { return maxTransactionsPerDay; }
+    public int getAvailableAccountTypes() { return availableAccountTypes; }
 
     @Override
     public String toString() {
