@@ -37,7 +37,12 @@ public class AccountService {
         if (repository.emailExists(normalizedEmail)) throw new DuplicateEmailException(normalizedEmail);
 
 
-        BankAccount account = new BankAccount(ownerName, normalizedEmail, initialDeposit);
+        BankAccount account = new BankAccountBuilder()
+                .name(ownerName)
+                .email(normalizedEmail)
+                .type(accountType)
+                .deposit(initialDeposit)
+                .build();
         repository.save(account);
 
         System.out.println("  ✅ Account opened: " + account);

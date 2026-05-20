@@ -117,7 +117,7 @@ public class Main {
                     double deposit = InputParser.readPositiveDouble(scanner, "  Initial deposit: $");
 
                     try {
-                        currentAccount = bankService.openAccount(name, email, deposit, accountType);
+                        currentAccount = bankService.openAccount(name,email, deposit, accountType);
                     } catch (DuplicateNameException e) {
                         System.out.println("  ❌ " + e.getMessage());
                         System.out.println("  Please enter a different name.");

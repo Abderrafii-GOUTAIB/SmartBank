@@ -48,8 +48,8 @@
 ✅ Step 36: SOLID — Interface Segregation
 ✅ Step 37: SOLID — Dependency Inversion
 ✅ Step 38: Pattern — Singleton
-→  Step 39: Pattern — Factory
-⬜ Step 40: Pattern — Builder
+✅ Step 39: Pattern — Factory
+→  Step 40: Pattern — Builder
 ⬜ Step 41: Pattern — Observer
 ⬜ Step 42: Pattern — Strategy
 ⬜ Step 43: Pattern — Decorator
@@ -82,7 +82,7 @@
 ⬜ Step 66: Final Assembly
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Progress: 15/66 steps (23%)
-Current:  Phase 2, Step 15
-Next:     Iterators & ConcurrentModification
+Progress: 40/66 steps (61%)
+Current:  Phase 4, Step 40
+Next:     Pattern — Observer
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
