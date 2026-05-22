@@ -1,5 +1,8 @@
 package org.example.model;
 
+import org.example.service.InterestStrategies;
+import org.example.service.InterestStrategy;
+
 public sealed interface AccountType permits AccountType.Savings, AccountType.Checking, AccountType.Business, AccountType.Investment, AccountType.Premium {
     String displayName();
 
@@ -10,13 +13,10 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
     double withdrawalLimit();
 
     default String summary() {
-        return String.format("%s — %.1f%% interest, $%.2f/month fee, $%,.0f withdrawal limit",
-                displayName(), interestRate() * 100, monthlyFee(), withdrawalLimit());
+        return String.format("%s — %.1f%% interest, $%.2f/month fee, $%,.0f withdrawal limit", displayName(), interestRate() * 100, monthlyFee(), withdrawalLimit());
     }
 
-    default double calculateInterestRate(double balance) {
-        return balance * interestRate();
-    }
+    InterestStrategy interestStrategy();
 
     default boolean isWithinLimit(double amount) {
         return amount <= withdrawalLimit();
@@ -50,13 +50,17 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
         public double withdrawalLimit() {
             return 10_000;
         }
+
+        @Override
+        public InterestStrategy interestStrategy() {
+            return InterestStrategies.simple(interestRate);
+        }
     }
 
     record Checking(double monthlyFee) implements AccountType {
         public Checking {
             if (monthlyFee < 0) {
-                throw new IllegalArgumentException(
-                        "Checking fee cannot be negative, got $" + monthlyFee);
+                throw new IllegalArgumentException("Checking fee cannot be negative, got $" + monthlyFee);
             }
         }
 
@@ -79,16 +83,19 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
             return 50_000;
         }
 
+        @Override
+        public InterestStrategy interestStrategy() {
+            return InterestStrategies.ZERO;
+        }
+
     }
 
     record Business(double interestRate, double monthlyFee) implements AccountType {
         public Business {
             if (interestRate < 0 || interestRate > 0.5)
-                throw new IllegalArgumentException(
-                        "Business interest rate must be 0-50%, got " + (interestRate * 100) + "%");
+                throw new IllegalArgumentException("Business interest rate must be 0-50%, got " + (interestRate * 100) + "%");
             if (monthlyFee < 0)
-                throw new IllegalArgumentException(
-                        "Business fee cannot be negative, got $" + monthlyFee);
+                throw new IllegalArgumentException("Business fee cannot be negative, got $" + monthlyFee);
         }
 
         public Business() {
@@ -104,16 +111,19 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
         public double withdrawalLimit() {
             return 500_000;
         }
+
+        @Override
+        public InterestStrategy interestStrategy() {
+            return InterestStrategies.compound(interestRate);
+        }
     }
 
     record Investment(double interestRate, double monthlyFee) implements AccountType {
         public Investment {
             if (interestRate < 0 || interestRate > 0.5)
-                throw new IllegalArgumentException(
-                        "Investment interest rate must be 0-50%, got " + (interestRate * 100) + "%");
+                throw new IllegalArgumentException("Investment interest rate must be 0-50%, got " + (interestRate * 100) + "%");
             if (monthlyFee < 0)
-                throw new IllegalArgumentException(
-                        "Investment fee cannot be negative, got $" + monthlyFee);
+                throw new IllegalArgumentException("Investment fee cannot be negative, got $" + monthlyFee);
         }
 
         public Investment() {
@@ -132,6 +142,11 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
 
         public int lockPeriodMonths() {
             return 12;
+        }
+
+        @Override
+        public InterestStrategy interestStrategy() {
+            return InterestStrategies.compound(interestRate);
         }
     }
 
@@ -167,6 +182,11 @@ public sealed interface AccountType permits AccountType.Savings, AccountType.Che
         @Override
         public double withdrawalLimit() {
             return withdrawalLimit;
+        }
+
+        @Override
+        public InterestStrategy interestStrategy() {
+            return InterestStrategies.tiered(interestRate, interestRate * 1.5, interestRate * 2);
         }
     }
 }

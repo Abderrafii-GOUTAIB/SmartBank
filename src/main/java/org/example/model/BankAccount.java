@@ -115,7 +115,7 @@ public class BankAccount implements Displayable {
 
 
     public double calculateInterest() {
-        return accountType.calculateInterestRate(balance);
+        return accountType.interestStrategy().calculate(balance);
     }
 
     // 🆕 Monthly fee
@@ -124,7 +124,9 @@ public class BankAccount implements Displayable {
     }
 
     // 🆕 Getter
-    public AccountType getAccountType() { return accountType; }
+    public AccountType getAccountType() {
+        return accountType;
+    }
 
 
     @Override
@@ -360,5 +362,5 @@ public class BankAccount implements Displayable {
         return Objects.hash(accountNumber);
     }
 
-    
+
 }

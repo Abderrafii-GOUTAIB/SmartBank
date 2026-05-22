@@ -82,7 +82,7 @@
 ⬜ Step 66: Final Assembly
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Progress: 40/66 steps (61%)
-Current:  Phase 4, Step 40
-Next:     Pattern — Observer
+Progress: 42/66 steps (63%)
+Current:  Phase 4, Step 42
+Next:     Pattern — Decorator
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
