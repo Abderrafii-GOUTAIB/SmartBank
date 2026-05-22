@@ -23,6 +23,10 @@ public class Main {
 
         System.out.println("=== " + BANK_NAME + " ===");
         System.out.println();
+
+        bankService.register(new AuditObserver(storage));
+        bankService.register(new RiskObserver(storage));
+        bankService.register(new TransactionTrackerObserver(tracker));
         // Load saved data (if any)
         bankService.loadAll();
 

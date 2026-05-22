@@ -3,6 +3,7 @@ package org.example.service;
 import org.example.model.*;
 import org.example.model.exception.*;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -13,7 +14,8 @@ public class AccountService {
     private final RiskService riskService;
     private final TransactionTracker tracker;
     private final StoragePort storage;
-    private final Double MINIMUM_OPENING_DEPOSIT = BankConfig.getInstance().getMinimumOpeningDeposit();
+    private final List<BankEventObserver> observers = new ArrayList<>();
+    private final double MINIMUM_OPENING_DEPOSIT = BankConfig.getInstance().getMinimumOpeningDeposit();
 
     public AccountService(AccountRepository repository,
                           RiskService riskService,
@@ -22,6 +24,18 @@ public class AccountService {
         this.riskService = riskService;
         this.tracker = tracker;
         this.storage = storage;
+    }
+
+    public void register(BankEventObserver observer) {
+        observers.add(observer);
+    }
+
+    public void unregister(BankEventObserver observer) {
+        observers.remove(observer);
+    }
+
+    private void publish(BankEvent event) {
+        observers.forEach(o -> o.onEvent(event));
     }
 
     // --- Account Creation ---
@@ -50,9 +64,8 @@ public class AccountService {
                 + " (" + String.format("%.1f%%", accountType.interestRate() * 100)
                 + " interest, $" + String.format("%.2f", accountType.monthlyFee()) + "/month)");
 
-        storage.logAudit("ACCOUNT_OPENED: " + account.getAccountNumber()  // ← replaced
-                + " " + ownerName + " " + accountType.displayName());
-
+        publish(new BankEvent.AccountEvent.AccountCreated(
+                account.getAccountNumber(), ownerName));
         return account;
     }
 
@@ -62,9 +75,8 @@ public class AccountService {
         try {
             account.deposit(amount);
 
-            tracker.recordDeposit(account.getAccountNumber(), amount);
-            tracker.recordCategory(TransactionType.DEPOSIT);
-            riskService.checkTransaction(account, amount, "deposit");
+            publish(new BankEvent.TransactionEvent(
+                    account.getAccountNumber(), TransactionType.DEPOSIT, amount));
 
             Transaction txn = account.getLastTransaction();
             System.out.println(ReceiptGenerator.generateTransactionReceipt(account, txn));
@@ -93,8 +105,9 @@ public class AccountService {
         try {
             account.withdraw(amount);
 
-            tracker.recordCategory(TransactionType.WITHDRAWAL);
-            riskService.checkTransaction(account, amount, "withdrawal");
+            publish(new BankEvent.TransactionEvent(
+                    account.getAccountNumber(), TransactionType.WITHDRAWAL, amount));
+
 
             Transaction txn = account.getLastTransaction();
             System.out.println(ReceiptGenerator.generateTransactionReceipt(account, txn));
@@ -115,7 +128,7 @@ public class AccountService {
             System.out.println("  ❌ " + ((BankException) e).toDisplayString());
             return new TransactionResult.Failure(
                     account.getAccountNumber(), amount,
-                    ((BankException) e).getErrorCode(), e.getMessage());
+                    e.getErrorCode(), e.getMessage());
         }
     }
 
@@ -147,10 +160,10 @@ public class AccountService {
                 throw e;
             }
 
-            tracker.recordDeposit(to.getAccountNumber(), amount);
-            tracker.recordCategory(TransactionType.TRANSFER_IN);
-            tracker.recordCategory(TransactionType.TRANSFER_OUT);
-            riskService.checkTransaction(from, amount, "transfer-out");
+            publish(new BankEvent.TransactionEvent(
+                    fromAccNum, TransactionType.TRANSFER_OUT, amount));
+            publish(new BankEvent.TransactionEvent(
+                    toAccNum, TransactionType.TRANSFER_IN, amount));
 
             TransferResult result = TransferResult.success(
                     fromAccNum, toAccNum, amount,
@@ -191,7 +204,7 @@ public class AccountService {
         riskService.unflag(accountNumber);
 
         System.out.println("  🗑️  Account " + accountNumber + " closed.");
-        storage.logAudit("ACCOUNT_CLOSED: " + accountNumber); // ← replaced
+        publish(new BankEvent.AccountEvent.AccountClosed(accountNumber));
         return true;
     }
 
@@ -366,7 +379,6 @@ public class AccountService {
 
             if (interest > 0) {
                 account.deposit(interest);
-                tracker.recordCategory(TransactionType.INTEREST);
                 totalInterest += interest;
 
                 System.out.printf("  %s (%s): $%,.2f interest at %.1f%%%n",
@@ -374,6 +386,9 @@ public class AccountService {
                         account.getAccountType().displayName(),
                         interest,
                         account.getAccountType().interestRate() * 100);
+                publish(new BankEvent.TransactionEvent(
+                        account.getAccountNumber(), TransactionType.INTEREST, interest));
+
             }
         }
 
@@ -398,13 +413,15 @@ public class AccountService {
             if (fee > 0) {
                 try {
                     account.withdraw(fee);
-                    tracker.recordCategory(TransactionType.FEE);
                     totalFees += fee;
 
                     System.out.printf("  %s (%s): $%.2f fee%n",
                             account.getAccountNumber(),
                             account.getAccountType().displayName(),
                             fee);
+                    publish(new BankEvent.TransactionEvent(
+                            account.getAccountNumber(), TransactionType.FEE, fee));
+
                 } catch (Exception e) {
                     System.out.printf("  %s: fee failed — %s%n",
                             account.getAccountNumber(), e.getMessage());
@@ -417,7 +434,8 @@ public class AccountService {
         }
 
         System.out.printf("  Total fees collected: $%,.2f%n", totalFees);
-        storage.logAudit("FEES_APPLIED: $" + String.format("%.2f", totalFees)); // ← replaced
+        publish(new BankEvent.SystemEvent(
+                "FEES_APPLIED total=$" + String.format("%.2f", totalFees)));
 
     }
 }
