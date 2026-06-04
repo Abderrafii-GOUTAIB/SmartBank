@@ -50,10 +50,10 @@
 ✅ Step 38: Pattern — Singleton
 ✅ Step 39: Pattern — Factory
 ✅ Step 40: Pattern — Builder
-→  Step 41: Pattern — Observer
-⬜ Step 42: Pattern — Strategy
-⬜ Step 43: Pattern — Decorator
-⬜ Step 44: Pattern — Template Method
+✅ Step 41: Pattern — Observer
+✅ Step 42: Pattern — Strategy
+✅ Step 43: Pattern — Decorator
+→  Step 44: Pattern — Template Method
 ⬜ Step 45: Pattern — Command
 
 ⚫ PHASE 5 — The Concurrent Bank ⬜
@@ -82,7 +82,7 @@
 ⬜ Step 66: Final Assembly
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Progress: 42/66 steps (63%)
-Current:  Phase 4, Step 42
-Next:     Pattern — Decorator
+Progress: 44/66 steps (66%)
+Current:  Phase 4, Step 44
+Next:     Pattern — Command
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

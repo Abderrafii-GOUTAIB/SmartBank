@@ -358,84 +358,10 @@ public class AccountService {
     }
 
     public void applyMonthlyInterest() {
-        System.out.println();
-        System.out.println("--- Applying Monthly Interest ---");
-
-        List<BankAccount> all = repository.getAll();
-        double totalInterest = 0;
-
-        for (BankAccount account : all) {
-            if (!account.isActive()) {
-                System.out.printf("  %s: skipped (%s)%n",
-                        account.getAccountNumber(),
-                        account.getStatus().description());
-                continue;
-            }
-
-            // OCP in action: account.calculateInterest() calls
-            // accountType.calculateInterest(balance)
-            // Each type returns its own rate. We don't switch on type here.
-            double interest = account.calculateInterest();
-
-            if (interest > 0) {
-                account.deposit(interest);
-                totalInterest += interest;
-
-                System.out.printf("  %s (%s): $%,.2f interest at %.1f%%%n",
-                        account.getAccountNumber(),
-                        account.getAccountType().displayName(),
-                        interest,
-                        account.getAccountType().interestRate() * 100);
-                publish(new BankEvent.TransactionEvent(
-                        account.getAccountNumber(), TransactionType.INTEREST, interest));
-
-            }
-        }
-
-        System.out.printf("  Total interest applied: $%,.2f%n", totalInterest);
-        storage.logAudit("INTEREST_APPLIED: $" + String.format("%.2f", totalInterest)); // ← replaced
-
+        new MonthlyInterestOperation(repository, this::publish).execute();
     }
 
     public void applyMonthlyFees() {
-        System.out.println();
-        System.out.println("--- Applying Monthly Fees ---");
-
-        List<BankAccount> all = repository.getAll();
-        double totalFees = 0;
-
-        for (BankAccount account : all) {
-            if (!account.isActive()) continue;
-
-            // OCP: account.getMonthlyFee() delegates to accountType.monthlyFee()
-            double fee = account.getMonthlyFee();
-
-            if (fee > 0) {
-                try {
-                    account.withdraw(fee);
-                    totalFees += fee;
-
-                    System.out.printf("  %s (%s): $%.2f fee%n",
-                            account.getAccountNumber(),
-                            account.getAccountType().displayName(),
-                            fee);
-                    publish(new BankEvent.TransactionEvent(
-                            account.getAccountNumber(), TransactionType.FEE, fee));
-
-                } catch (Exception e) {
-                    System.out.printf("  %s: fee failed — %s%n",
-                            account.getAccountNumber(), e.getMessage());
-                }
-            } else {
-                System.out.printf("  %s (%s): no fee ✅%n",
-                        account.getAccountNumber(),
-                        account.getAccountType().displayName());
-            }
-        }
-
-        System.out.printf("  Total fees collected: $%,.2f%n", totalFees);
-        publish(new BankEvent.SystemEvent(
-                "FEES_APPLIED total=$" + String.format("%.2f", totalFees)));
-
+        new MonthlyFeesOperation(repository, this::publish).execute();
     }
 }

@@ -43,6 +43,8 @@ public class Main {
             System.out.println();
         }
 
+
+
         BankAccount currentAccount = repository.getByIndex(0);
         boolean running = true;
 
