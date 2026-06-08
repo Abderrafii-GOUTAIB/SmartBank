@@ -14,6 +14,7 @@ public class AccountService {
     private final RiskService riskService;
     private final TransactionTracker tracker;
     private final StoragePort storage;
+    private final CommandHistory history;
     private final List<BankEventObserver> observers = new ArrayList<>();
     private final double MINIMUM_OPENING_DEPOSIT = BankConfig.getInstance().getMinimumOpeningDeposit();
 
@@ -24,6 +25,7 @@ public class AccountService {
         this.riskService = riskService;
         this.tracker = tracker;
         this.storage = storage;
+        this.history = new CommandHistory(storage);
     }
 
     public void register(BankEventObserver observer) {
@@ -36,6 +38,10 @@ public class AccountService {
 
     private void publish(BankEvent event) {
         observers.forEach(o -> o.onEvent(event));
+    }
+
+    public CommandHistory getHistory() {                  // ← NEW
+        return history;
     }
 
     // --- Account Creation ---

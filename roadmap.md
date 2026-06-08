@@ -53,8 +53,8 @@
 ✅ Step 41: Pattern — Observer
 ✅ Step 42: Pattern — Strategy
 ✅ Step 43: Pattern — Decorator
-→  Step 44: Pattern — Template Method
-⬜ Step 45: Pattern — Command
+✅ Step 44: Pattern — Template Method
+→  Step 45: Pattern — Command
 
 ⚫ PHASE 5 — The Concurrent Bank ⬜
 ⬜ Step 46: Thread Basics — Runnable

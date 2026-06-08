@@ -98,7 +98,7 @@ public class BankAccount implements Displayable {
         if (amount <= 0) {
             throw new InvalidAmountException(accountNumber, amount);
         }
-        if (!status.cannotTransact()) {
+        if (status.cannotTransact()) {
             throw new AccountFrozenException(accountNumber, status);
         }
         if (!accountType.isWithinLimit(amount)) {

@@ -7,7 +7,7 @@ import org.example.service.*;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import service.InputParser;
+import org.example.service.InputParser;
 
 public class Main {
 
@@ -42,7 +42,6 @@ public class Main {
             }
             System.out.println();
         }
-
 
 
         BankAccount currentAccount = repository.getByIndex(0);
@@ -88,10 +87,12 @@ public class Main {
             System.out.println("║  15. Apply Interest                 ║");
             System.out.println("║  16. Apply Fees                     ║");
             System.out.println("║  17. Save                           ║");
-            System.out.println("║  18. Exit                           ║");
+            System.out.println("║  18. Undo Last Operation            ║");
+            System.out.println("║  19. View Command History           ║");
+            System.out.println("║  20. Exit                           ║");
             System.out.println("╚═════════════════════════════════════╝");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-18): ", 1, 18);
+            int choice = InputParser.readInt(scanner, "Choose (1-18): ", 1, 20);
 
             // Guard: most options need a selected account
             if (currentAccount == null && choice >= 2 && choice <= 9) {
@@ -123,7 +124,7 @@ public class Main {
                     double deposit = InputParser.readPositiveDouble(scanner, "  Initial deposit: $");
 
                     try {
-                        currentAccount = bankService.openAccount(name,email, deposit, accountType);
+                        currentAccount = bankService.openAccount(name, email, deposit, accountType);
                     } catch (DuplicateNameException e) {
                         System.out.println("  ❌ " + e.getMessage());
                         System.out.println("  Please enter a different name.");
@@ -200,35 +201,31 @@ public class Main {
 
                 case 6 -> {
                     double amount = InputParser.readPositiveDouble(scanner, "  Deposit: $");
-                    bankService.deposit(currentAccount, amount);
+                    bankService.getHistory().executeAndRecord(
+                            new DepositCommand(bankService, currentAccount, amount));
                 }
 
                 case 7 -> {
                     double amount = InputParser.readPositiveDouble(scanner, "  Withdraw: $");
-                    bankService.withdraw(currentAccount, amount);
+                    bankService.getHistory().executeAndRecord(
+                            new WithdrawCommand(bankService, currentAccount, amount));
                 }
-
                 case 8 -> {
                     System.out.println("  From: " + currentAccount);
                     System.out.print("  Destination account number: ");
                     String toAccNum = scanner.nextLine().trim().toUpperCase();
                     double amount = InputParser.readPositiveDouble(scanner, "  Amount: $");
-                    bankService.transfer(currentAccount.getAccountNumber(), toAccNum, amount);
+                    bankService.getHistory().executeAndRecord(
+                            new TransferCommand(bankService,
+                                    currentAccount.getAccountNumber(), toAccNum, amount));
                 }
 
                 case 9 -> currentAccount.printMiniStatement();
-
-                // ═══════════════════════════════════
-                // REPORTS
-                // ═══════════════════════════════════
-
                 case 10 -> bankService.printDashboard();
-
                 case 11 -> {
                     System.out.print("  Search by name: ");
                     bankService.searchAccounts(scanner.nextLine());
                 }
-
                 case 12 -> tracker.printDailyReport(repository);
 
                 // ═══════════════════════════════════
@@ -255,7 +252,10 @@ public class Main {
                 case 16 -> bankService.applyMonthlyFees();
                 case 17 -> bankService.saveAll();
 
-                case 18 -> {
+                case 18 -> bankService.getHistory().undoLast();
+                case 19 -> bankService.getHistory().printHistory();
+
+                case 20 -> {
                     System.out.print("  Save before exiting? (y/n): ");
                     if (scanner.nextLine().trim().toLowerCase().startsWith("y")) {
                         bankService.saveAll();
