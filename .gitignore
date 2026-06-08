@@ -37,3 +37,9 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### SmartBank Session ###
+Smartbank Session Context Guide.md
+
+### gitignore ###
+.gitignore
