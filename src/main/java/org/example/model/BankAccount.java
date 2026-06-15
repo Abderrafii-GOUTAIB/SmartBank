@@ -94,7 +94,7 @@ public class BankAccount implements Displayable {
 
     }
 
-    public void withdraw(double amount) {
+    public synchronized void withdraw(double amount) {
         if (amount <= 0) {
             throw new InvalidAmountException(accountNumber, amount);
         }
@@ -108,6 +108,10 @@ public class BankAccount implements Displayable {
         }
         if (amount > balance) {
             throw new InsufficientFundsException(accountNumber, amount, balance);
+        }
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
         }
         balance -= amount;
         addTransaction(TransactionType.WITHDRAWAL, amount);

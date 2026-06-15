@@ -11,7 +11,14 @@ import org.example.service.InputParser;
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
+        boolean runTest = true;   // flip to false for normal app
+
+        if (runTest) {
+            raceTest();
+            return;
+        }
+
         Scanner scanner = new Scanner(System.in);
         StoragePort storage = new DataStore();
         AccountRepository repository = new AccountRepository();
@@ -269,5 +276,31 @@ public class Main {
         }
 
         scanner.close();
+    }
+
+
+    public static void raceTest() throws InterruptedException {
+        BankAccount account = new BankAccount("RaceTest", "race@test.com", 1000);
+        System.out.println("Starting balance: $" + account.getBalance());
+
+        int threadCount = 100;
+        Thread[] threads = new Thread[threadCount];
+
+        for (int i = 0; i < threadCount; i++) {
+            threads[i] = new Thread(() -> {
+                try {
+                    account.withdraw(1000);
+                    System.out.println("  ✅ SUCCESS — "
+                            + Thread.currentThread().getName());
+                } catch (Exception e) {
+                    // expected — most fail
+                }
+            }, "Thread-" + i);
+        }
+
+        for (Thread t : threads) t.start();
+        for (Thread t : threads) t.join();
+
+        System.out.println("Final balance: $" + account.getBalance());
     }
 }
