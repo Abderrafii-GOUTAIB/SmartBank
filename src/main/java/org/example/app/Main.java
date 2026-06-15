@@ -18,6 +18,7 @@ public class Main {
         RiskService riskService = new RiskService(storage);
         TransactionTracker tracker = new TransactionTracker();
         AccountService bankService = new AccountService(repository, riskService, tracker, storage);
+        AutoSaveService autoSave = new AutoSaveService(bankService,60);
         String BANK_NAME = BankConfig.getInstance().getBankName();
         int AVAILABLE_ACCOUNT_TYPES = AccountTypeChoice.values().length;
 
@@ -27,7 +28,7 @@ public class Main {
         bankService.register(new AuditObserver(storage));
         bankService.register(new RiskObserver(storage));
         bankService.register(new TransactionTrackerObserver(tracker));
-        // Load saved data (if any)
+
         bankService.loadAll();
 
         // Seed accounts if empty (first run)
@@ -256,6 +257,7 @@ public class Main {
                 case 19 -> bankService.getHistory().printHistory();
 
                 case 20 -> {
+                    autoSave.stop();
                     System.out.print("  Save before exiting? (y/n): ");
                     if (scanner.nextLine().trim().toLowerCase().startsWith("y")) {
                         bankService.saveAll();

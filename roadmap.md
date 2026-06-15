@@ -54,10 +54,10 @@
 ✅ Step 42: Pattern — Strategy
 ✅ Step 43: Pattern — Decorator
 ✅ Step 44: Pattern — Template Method
-→  Step 45: Pattern — Command
+✅ Step 45: Pattern — Command
 
 ⚫ PHASE 5 — The Concurrent Bank ⬜
-⬜ Step 46: Thread Basics — Runnable
+→  Step 46: Thread Basics — Runnable
 ⬜ Step 47: Synchronization & Race Conditions
 ⬜ Step 48: volatile & AtomicInteger
 ⬜ Step 49: ExecutorService & Thread Pools

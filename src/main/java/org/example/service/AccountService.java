@@ -17,6 +17,7 @@ public class AccountService {
     private final CommandHistory history;
     private final List<BankEventObserver> observers = new ArrayList<>();
     private final double MINIMUM_OPENING_DEPOSIT = BankConfig.getInstance().getMinimumOpeningDeposit();
+    private volatile boolean dirty = false;
 
     public AccountService(AccountRepository repository,
                           RiskService riskService,
@@ -64,7 +65,7 @@ public class AccountService {
                 .deposit(initialDeposit)
                 .build();
         repository.save(account);
-
+        markDirty();
         System.out.println("  ✅ Account opened: " + account);
         System.out.println("     Type: " + accountType.displayName()
                 + " (" + String.format("%.1f%%", accountType.interestRate() * 100)
@@ -83,7 +84,7 @@ public class AccountService {
 
             publish(new BankEvent.TransactionEvent(
                     account.getAccountNumber(), TransactionType.DEPOSIT, amount));
-
+            markDirty();
             Transaction txn = account.getLastTransaction();
             System.out.println(ReceiptGenerator.generateTransactionReceipt(account, txn));
 
@@ -113,8 +114,7 @@ public class AccountService {
 
             publish(new BankEvent.TransactionEvent(
                     account.getAccountNumber(), TransactionType.WITHDRAWAL, amount));
-
-
+            markDirty();
             Transaction txn = account.getLastTransaction();
             System.out.println(ReceiptGenerator.generateTransactionReceipt(account, txn));
 
@@ -170,7 +170,7 @@ public class AccountService {
                     fromAccNum, TransactionType.TRANSFER_OUT, amount));
             publish(new BankEvent.TransactionEvent(
                     toAccNum, TransactionType.TRANSFER_IN, amount));
-
+            markDirty();
             TransferResult result = TransferResult.success(
                     fromAccNum, toAccNum, amount,
                     from.getBalance(), to.getBalance());
@@ -208,7 +208,7 @@ public class AccountService {
 
         repository.remove(account);
         riskService.unflag(accountNumber);
-
+        markDirty();
         System.out.println("  🗑️  Account " + accountNumber + " closed.");
         publish(new BankEvent.AccountEvent.AccountClosed(accountNumber));
         return true;
@@ -327,9 +327,9 @@ public class AccountService {
     public void saveAll() {
         try {
             List<BankAccount> all = repository.getAll();
-            storage.saveState(all);                                         // ← replaces 2 static calls
-            storage.saveFlaggedAccounts(riskService.getFlaggedAccounts());  // ← replaces 1 static call
-
+            storage.saveState(all);
+            storage.saveFlaggedAccounts(riskService.getFlaggedAccounts());
+            dirty = false;
             System.out.println("  ✅ All data saved.");
         } catch (StorageException e) {
             System.out.println("  ❌ Save failed: " + e.getMessage());
@@ -369,5 +369,13 @@ public class AccountService {
 
     public void applyMonthlyFees() {
         new MonthlyFeesOperation(repository, this::publish).execute();
+    }
+
+    private void markDirty() {
+        dirty = true;
+    }
+
+    public boolean isDirty() {
+        return dirty;
     }
 }
