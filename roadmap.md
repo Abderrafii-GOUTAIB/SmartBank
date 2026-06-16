@@ -58,8 +58,8 @@
 
 ⚫ PHASE 5 — The Concurrent Bank ⬜
 ✅ Step 46: Thread Basics — Runnable
-→  Step 47: Synchronization & Race Conditions
-⬜ Step 48: volatile & AtomicInteger
+✅ Step 47: Synchronization & Race Conditions
+→  Step 48: volatile & AtomicInteger
 ⬜ Step 49: ExecutorService & Thread Pools
 ⬜ Step 50: CompletableFuture
 ⬜ Step 51: Concurrent Collections

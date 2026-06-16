@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BankAccount implements Displayable {
 
@@ -22,7 +23,7 @@ public class BankAccount implements Displayable {
 
     // PRIVATE STATIC — only this class manages the counter
     // No one outside should touch the ID generator
-    private static int nextId = 1;
+    private static final AtomicInteger nextId = new AtomicInteger(1);
 
     // PUBLIC STATIC FINAL — everyone can READ the bank name, no one can change it
     public static final String BANK_NAME = BankConfig.getInstance().getBankName();
@@ -70,14 +71,13 @@ public class BankAccount implements Displayable {
 
     // PRIVATE STATIC — internal utility, no one outside needs this
     private static String generateAccountNumber() {
-        String accNum = String.format("ACC-%04d", nextId);
-        nextId++;
-        return accNum;
+        int id = nextId.getAndIncrement();
+        return String.format("%08d", id);
     }
 
     // PUBLIC STATIC — useful query, safe to expose
     public static int getTotalAccounts() {
-        return nextId - 1;
+        return nextId.get() - 1;
     }
 
     // --- PUBLIC methods — the API we expose ---

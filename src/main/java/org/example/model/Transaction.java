@@ -4,9 +4,10 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Transaction implements Comparable<Transaction> {
-    private static int nextId = 1;
+    private static final AtomicInteger nextId = new AtomicInteger(1);
     private final int transactionId;
     private final String accountNumber;
     private final TransactionType type;
@@ -26,23 +27,25 @@ public class Transaction implements Comparable<Transaction> {
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
 
-    public Transaction( String accountNumber, TransactionType type, double amount, double balanceAfter ) {
-        this.transactionId = nextId++;
+    public Transaction(String accountNumber, TransactionType type, double amount, double balanceAfter) {
+        this.transactionId = nextId.getAndIncrement();
         this.accountNumber = accountNumber;
         this.type = type;
         this.amount = amount;
         this.balanceAfter = balanceAfter;
         this.dateTime = LocalDateTime.now();
     }
+
     public Transaction(String accountNumber, TransactionType type,
                        double amount, double balanceAfter, LocalDateTime dateTime) {
-        this.transactionId = nextId++;
+        this.transactionId = nextId.getAndIncrement();
         this.accountNumber = accountNumber;
         this.type = type;
         this.amount = amount;
         this.balanceAfter = balanceAfter;
         this.dateTime = dateTime;
     }
+
     @Override
     public int compareTo(Transaction other) {
         return Integer.compare(this.transactionId, other.transactionId);
@@ -61,12 +64,12 @@ public class Transaction implements Comparable<Transaction> {
         return transactionId;
     }
 
-    public int compareAmountTo(Transaction other){
+    public int compareAmountTo(Transaction other) {
         return Double.compare(amount, other.amount);
     }
 
-    public boolean isAmountBetween(double min, double max){
-        if(Double.isNaN(min) || Double.isNaN(max)){
+    public boolean isAmountBetween(double min, double max) {
+        if (Double.isNaN(min) || Double.isNaN(max)) {
             throw new IllegalArgumentException("Min and Max cannot be NaN");
         }
         return amount >= min && amount <= max;
@@ -92,7 +95,7 @@ public class Transaction implements Comparable<Transaction> {
         Duration elapsed = Duration.between(dateTime, LocalDateTime.now());
 
         long seconds = elapsed.getSeconds();
-        if (seconds < 60)   return seconds + "s ago";
+        if (seconds < 60) return seconds + "s ago";
         if (seconds < 3600) return (seconds / 60) + "m ago";
         if (seconds < 86400) return (seconds / 3600) + "h ago";
         return (seconds / 86400) + "d ago";
@@ -148,12 +151,29 @@ public class Transaction implements Comparable<Transaction> {
 
     // --- Standard getters ---
 
-    public String getAccountNumber() { return accountNumber; }
-    public TransactionType getType()          { return type; }
-    public String getTypeName() { return type.displayName(); }
-    public double getAmount()        { return amount; }
-    public double getBalanceAfter()  { return balanceAfter; }
-    public LocalDateTime getDateTime()  { return dateTime; }
+    public String getAccountNumber() {
+        return accountNumber;
+    }
+
+    public TransactionType getType() {
+        return type;
+    }
+
+    public String getTypeName() {
+        return type.displayName();
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public double getBalanceAfter() {
+        return balanceAfter;
+    }
+
+    public LocalDateTime getDateTime() {
+        return dateTime;
+    }
 
 
     @Override
