@@ -4,19 +4,20 @@ import org.example.model.BankAccount;
 import org.example.model.exception.AccountNotFoundException;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class AccountRepository {
 
-    private final List<BankAccount> accounts;
-    private final Map<String, BankAccount> accountMap;
-    private final Set<String> registeredEmails;
-    private final Set<String> registeredOwnerNames;
+
+
+    private final List<BankAccount> accounts = new CopyOnWriteArrayList<>();
+    private final Map<String, BankAccount> accountMap = new ConcurrentHashMap<>();
+    private final Set<String> registeredEmails = ConcurrentHashMap.newKeySet();
+    private final Set<String> registeredOwnerNames = ConcurrentHashMap.newKeySet();
+
 
     public AccountRepository() {
-        this.accounts = new ArrayList<>();
-        this.accountMap = new HashMap<>();
-        this.registeredEmails = new HashSet<>();
-        this.registeredOwnerNames = new HashSet<>();
     }
 
     // --- Store ---

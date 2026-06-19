@@ -12,12 +12,7 @@ import org.example.service.InputParser;
 public class Main {
 
     public static void main(String[] args) throws InterruptedException {
-        boolean runTest = true;   // flip to false for normal app
 
-        if (runTest) {
-            raceTest();
-            return;
-        }
 
         Scanner scanner = new Scanner(System.in);
         StoragePort storage = new DataStore();
