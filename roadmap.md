@@ -59,8 +59,8 @@
 ⚫ PHASE 5 — The Concurrent Bank ⬜
 ✅ Step 46: Thread Basics — Runnable
 ✅ Step 47: Synchronization & Race Conditions
-→  Step 48: volatile & AtomicInteger
-⬜ Step 49: ExecutorService & Thread Pools
+✅ Step 48: volatile & AtomicInteger
+→  Step 49: ExecutorService & Thread Pools
 ⬜ Step 50: CompletableFuture
 ⬜ Step 51: Concurrent Collections
 ⬜ Step 52: Deadlock — Detection & Prevention
@@ -82,7 +82,7 @@
 ⬜ Step 66: Final Assembly
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Progress: 44/66 steps (66%)
-Current:  Phase 4, Step 44
-Next:     Pattern — Command
+Progress: 49/66 steps (74%)
+Current:  Phase 5, Step 50
+Next:     The Concurrent — CompletableFuture
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
