@@ -39,10 +39,15 @@ public class AutoSaveService {
 
     // the task that runs on schedule
     private void autoSave() {
-        if (bankService.isDirty()) {
-            bankService.saveAll();
-            System.out.println("  💾 [auto-save] Changes saved.");
+        try {
+            if (bankService.isDirty()) {
+                bankService.saveAll();
+                System.out.println("  💾 [auto-save] Changes saved.");
+            }
+        }catch (Exception e) {
+            System.out.println(" ⚠\uFE0F  [auto-save] failed: \" + e.getMessage()");
         }
+
 
     }
 
