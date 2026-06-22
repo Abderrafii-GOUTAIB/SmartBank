@@ -63,8 +63,8 @@
 ✅ Step 49: ExecutorService & Thread Pools
 ✅ Step 50: CompletableFuture
 ✅ Step 51: Concurrent Collections
-→  Step 52: Deadlock — Detection & Prevention
-⬜ Step 53: Virtual Threads (Java 21+)
+✅ Step 52: Deadlock — Detection & Prevention
+→  Step 53: Virtual Threads (Java 21+)
 ⬜ Step 54: Scheduled Tasks
 
 💎 PHASE 6 — The Expert Bank ⬜
@@ -82,7 +82,7 @@
 ⬜ Step 66: Final Assembly
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Progress: 52/66 steps (74%)
+Progress: 53/66 steps (80%)
 Current:  Phase 5, Step 53
-Next:     The Concurrent — Virtual Threads (Java 21+)
+Next:     The Concurrent — Scheduled Tasks
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
