@@ -143,54 +143,58 @@ public class AccountService {
     public TransferResult transfer(String fromAccNum, String toAccNum, double amount) {
         try {
             BankAccount from = repository.findByAccountNumber(fromAccNum);
-            BankAccount to = repository.findByAccountNumber(toAccNum);
+            BankAccount to   = repository.findByAccountNumber(toAccNum);
 
             if (fromAccNum.equals(toAccNum)) {
                 System.out.println("  ❌ Cannot transfer to the same account.");
-                return TransferResult.failure(fromAccNum, toAccNum, amount,
-                        "Same account");
+                return TransferResult.failure(fromAccNum, toAccNum, amount, "Same account");
             }
 
-            // Execute transfer (withdraw first, deposit second)
-            boolean withdrawn = false;
-            try {
-                from.withdraw(amount);
-                withdrawn = true;
-                to.deposit(amount);
-            } catch (Exception e) {
-                // Rollback if deposit failed after withdrawal
-                if (withdrawn) {
-                    from.deposit(amount); // compensating transaction
-                    System.out.println("  ⚠️  Transfer rolled back.");
+            // ── DEADLOCK PREVENTION — always lock in a consistent order ──────────
+            // Decide lock order by account number (alphabetical/natural order).
+            // BOTH threads will lock the lower number first, higher second.
+            // → no circular wait → no deadlock possible.
+            BankAccount firstLock  = fromAccNum.compareTo(toAccNum) < 0 ? from : to;
+            BankAccount secondLock = fromAccNum.compareTo(toAccNum) < 0 ? to : from;
+
+            synchronized (firstLock) {           // lock lower account number first
+                synchronized (secondLock) {      // then higher — ALWAYS this order
+
+                    boolean withdrawn = false;
+                    try {
+                        from.withdraw(amount);
+                        withdrawn = true;
+                        to.deposit(amount);
+                    } catch (Exception e) {
+                        if (withdrawn) {
+                            from.deposit(amount);   // rollback
+                            System.out.println("  ⚠️  Transfer rolled back.");
+                        }
+                        throw e;
+                    }
+
+                    publish(new BankEvent.TransactionEvent(
+                            fromAccNum, TransactionType.TRANSFER_OUT, amount));
+                    publish(new BankEvent.TransactionEvent(
+                            toAccNum, TransactionType.TRANSFER_IN, amount));
+                    markDirty();
+
+                    TransferResult result = TransferResult.success(
+                            fromAccNum, toAccNum, amount,
+                            from.getBalance(), to.getBalance());
+                    System.out.println("  " + result.toDisplayString());
+                    return result;
                 }
-                throw e;
             }
-
-            publish(new BankEvent.TransactionEvent(
-                    fromAccNum, TransactionType.TRANSFER_OUT, amount));
-            publish(new BankEvent.TransactionEvent(
-                    toAccNum, TransactionType.TRANSFER_IN, amount));
-            markDirty();
-            TransferResult result = TransferResult.success(
-                    fromAccNum, toAccNum, amount,
-                    from.getBalance(), to.getBalance());
-
-            System.out.println("  " + result.toDisplayString());
-
-            storage.logAudit("TRANSFER: $" + amount + " " + fromAccNum + " → " + toAccNum);
-
-            return result;
 
         } catch (AccountNotFoundException e) {
             System.out.println("  ❌ " + e.toDisplayString());
             return TransferResult.failure(fromAccNum, toAccNum, amount, e.getMessage());
-
         } catch (InsufficientFundsException e) {
-            System.out.println(" ❌ :" + e.toDisplayString());
+            System.out.println("  ❌ " + e.toDisplayString());
             return TransferResult.failure(fromAccNum, toAccNum, amount, e.getMessage());
-
         } catch (AccountFrozenException e) {
-            System.out.println(" ❌ " + e.toDisplayString());
+            System.out.println("  ❌ " + e.toDisplayString());
             return TransferResult.failure(fromAccNum, toAccNum, amount, e.getMessage());
         }
     }
