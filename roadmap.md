@@ -76,8 +76,8 @@
 ✅ Step 60: JSON Serialization
 ✅ Step 61: Networking — HTTP Client
 ✅ Step 62: JDBC Concepts
-→ Step 63: JUnit 5 — Unit Tests
-⬜ Step 64: Mocking & TDD
+✅ Step 63: JUnit 5 — Unit Tests
+→  Step 64: Mocking & TDD
 ⬜ Step 65: Module System (JPMS)
 ⬜ Step 66: Final Assembly
 
