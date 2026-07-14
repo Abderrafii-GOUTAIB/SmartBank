@@ -65,24 +65,24 @@
 ✅ Step 51: Concurrent Collections
 ✅ Step 52: Deadlock — Detection & Prevention
 ✅ Step 53: Virtual Threads (Java 21+)
-→  Step 54: Scheduled Tasks
+✅ Step 54: Scheduled Tasks
 
 💎 PHASE 6 — The Expert Bank ⬜
-⬜ Step 55: JVM Internals — Memory & GC
-⬜ Step 56: Reflection API
-⬜ Step 57: Custom Annotations
-⬜ Step 58: Annotation Processing
-⬜ Step 59: Serialization
-⬜ Step 60: JSON Serialization
-⬜ Step 61: Networking — HTTP Client
-⬜ Step 62: JDBC Concepts
-⬜ Step 63: JUnit 5 — Unit Tests
+✅ Step 55: JVM Internals — Memory & GC
+✅ Step 56: Reflection API
+✅ Step 57: Custom Annotations
+✅ Step 58: Annotation Processing
+✅ Step 59: Serialization
+✅ Step 60: JSON Serialization
+✅ Step 61: Networking — HTTP Client
+✅ Step 62: JDBC Concepts
+→ Step 63: JUnit 5 — Unit Tests
 ⬜ Step 64: Mocking & TDD
 ⬜ Step 65: Module System (JPMS)
 ⬜ Step 66: Final Assembly
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Progress: 54/66 steps (80%)
-Current:  Phase 6, Step 55
-Next:     The Expert Bank — JVM Internals — Memory & GC
+Progress: 63/66 steps (80%)
+Current:  Phase 6, Step 63
+Next:     The Expert Bank — Mocking & TDD
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
