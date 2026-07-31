@@ -142,8 +142,8 @@ public class AccountService {
 
     public TransferResult transfer(String fromAccNum, String toAccNum, double amount) {
         try {
-            BankAccount from = repository.findByAccountNumber(fromAccNum);
-            BankAccount to   = repository.findByAccountNumber(toAccNum);
+            BankAccount from = repository.getByAccountNumber(fromAccNum);
+            BankAccount to   = repository.getByAccountNumber(toAccNum);
 
             if (fromAccNum.equals(toAccNum)) {
                 System.out.println("  ❌ Cannot transfer to the same account.");
@@ -199,10 +199,20 @@ public class AccountService {
         }
     }
 
+    // --- Status changes ---
+
+    public void changeStatus(BankAccount account, AccountStatus newStatus) {
+        AccountStatus oldStatus = account.getStatus();
+        account.changeStatus(newStatus);
+        markDirty();
+        publish(new BankEvent.AccountEvent.StatusChanged(
+                account.getAccountNumber(), oldStatus, newStatus));
+    }
+
     // --- Close Account ---
 
     public boolean closeAccount(String accountNumber) {
-        BankAccount account = repository.findByAccountNumber(accountNumber);
+        BankAccount account = repository.getByAccountNumber(accountNumber);
 
         if (account.getBalance() > 0) {
             System.out.println("  ⚠️  Account has $" + String.format("%,.2f", account.getBalance())

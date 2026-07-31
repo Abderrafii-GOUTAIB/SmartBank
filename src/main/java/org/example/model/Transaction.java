@@ -51,15 +51,6 @@ public class Transaction implements Comparable<Transaction> {
         return Integer.compare(this.transactionId, other.transactionId);
     }
 
-    public String ToDataString() {
-        return String.join("|",
-                String.valueOf(transactionId),
-                type.name(),
-                String.valueOf(amount),
-                String.valueOf(balanceAfter)
-        );
-    }
-
     public Integer getId() {
         return transactionId;
     }

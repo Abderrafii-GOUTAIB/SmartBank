@@ -1,4 +1,8 @@
-package org.example.model;
+package org.example.training;
+
+import org.example.model.AccountStatus;
+import org.example.model.BankAccount;
+import org.example.model.Transaction;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

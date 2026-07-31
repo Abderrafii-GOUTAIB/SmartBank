@@ -17,7 +17,7 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
         StoragePort storage = new DataStore();
         AccountRepository repository = new AccountRepository();
-        RiskService riskService = new RiskService(storage);
+        RiskService riskService = new RiskService();
         TransactionTracker tracker = new TransactionTracker();
         AccountService bankService = new AccountService(repository, riskService, tracker, storage);
         AutoSaveService autoSave = new AutoSaveService(bankService,60);
@@ -30,6 +30,8 @@ public class Main {
         bankService.register(new AuditObserver(storage));
         bankService.register(new RiskObserver(storage));
         bankService.register(new TransactionTrackerObserver(tracker));
+
+        autoSave.start();
 
         bankService.loadAll();
 
@@ -95,7 +97,7 @@ public class Main {
             System.out.println("║  20. Exit                           ║");
             System.out.println("╚═════════════════════════════════════╝");
 
-            int choice = InputParser.readInt(scanner, "Choose (1-18): ", 1, 20);
+            int choice = InputParser.readInt(scanner, "Choose (1-20): ", 1, 20);
 
             // Guard: most options need a selected account
             if (currentAccount == null && choice >= 2 && choice <= 9) {
@@ -188,10 +190,7 @@ public class Main {
                         }
                         int statusChoice = InputParser.readInt(scanner, "  Choose: ", 1, validTransitions.size());
                         try {
-                            currentAccount.changeStatus(validTransitions.get(statusChoice - 1));
-                            storage.logAudit("STATUS_CHANGE: "                    // ← was DataStore.appendLog
-                                    + currentAccount.getAccountNumber()
-                                    + " → " + currentAccount.getStatus());
+                            bankService.changeStatus(currentAccount, validTransitions.get(statusChoice - 1));
                         } catch (InvalidStatusTransitionException e) {
                             System.out.println("  ❌ " + e.toDisplayString());
                         }
@@ -271,31 +270,5 @@ public class Main {
         }
 
         scanner.close();
-    }
-
-
-    public static void raceTest() throws InterruptedException {
-        BankAccount account = new BankAccount("RaceTest", "race@test.com", 1000);
-        System.out.println("Starting balance: $" + account.getBalance());
-
-        int threadCount = 100;
-        Thread[] threads = new Thread[threadCount];
-
-        for (int i = 0; i < threadCount; i++) {
-            threads[i] = new Thread(() -> {
-                try {
-                    account.withdraw(1000);
-                    System.out.println("  ✅ SUCCESS — "
-                            + Thread.currentThread().getName());
-                } catch (Exception e) {
-                    // expected — most fail
-                }
-            }, "Thread-" + i);
-        }
-
-        for (Thread t : threads) t.start();
-        for (Thread t : threads) t.join();
-
-        System.out.println("Final balance: $" + account.getBalance());
     }
 }

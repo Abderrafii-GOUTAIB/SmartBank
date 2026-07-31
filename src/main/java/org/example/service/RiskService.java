@@ -1,19 +1,14 @@
 package org.example.service;
 
-import org.example.model.BankAccount;
-
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 public class RiskService {
 
     private final Set<String> flaggedAccounts;
-    private final StoragePort storage;
-    private static final double LARGE_TRANSACTION_THRESHOLD = BankConfig.getInstance().getLargeTransactionThreshold();
 
-    public RiskService(StoragePort storage) {
+    public RiskService() {
         this.flaggedAccounts = new LinkedHashSet<>();
-        this.storage = storage;
     }
 
     // ── FLAGGING ──────────────────────────────────────────────────────────────
@@ -42,18 +37,6 @@ public class RiskService {
         flaggedAccounts.addAll(flags);
     }
 
-    // ── ALERTS ────────────────────────────────────────────────────────────────
-
-    public void checkTransaction(BankAccount account, double amount, String type) {
-        if (amount >= LARGE_TRANSACTION_THRESHOLD) {
-            System.out.println("  🔔 ALERT: Large " + type + " of $"
-                    + String.format("%,.2f", amount)
-                    + " on account " + account.getAccountNumber());
-            storage.logAudit("LARGE_TXN: " + type + " $" + amount
-                    + " on " + account.getAccountNumber());
-        }
-    }
-
     // ── REPORTS ───────────────────────────────────────────────────────────────
 
     public void printFlaggedAccounts(AccountRepository repo) {
@@ -68,7 +51,7 @@ public class RiskService {
         // int[] trick — lambda needs effectively final variable (Phase 3)
         int[] counter = {1};
         flaggedAccounts.forEach(accNum ->
-                repo.findByAccountNumberSafe(accNum).ifPresent(acc ->
+                repo.findByAccountNumber(accNum).ifPresent(acc ->
                         System.out.println("  " + counter[0]++ + ". " + acc)));
     }
 }

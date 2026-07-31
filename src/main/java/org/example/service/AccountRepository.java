@@ -32,13 +32,13 @@ public class AccountRepository {
     public void remove(BankAccount account) {
         accounts.remove(account);
         accountMap.remove(account.getAccountNumber());
-        registeredEmails.remove(account.getEmail());
-        registeredOwnerNames.remove(account.getOwnerName());
+        Optional.ofNullable(account.getEmail()).map(String::trim).filter(s -> !s.isBlank()).ifPresent(s -> registeredEmails.remove(s.toLowerCase()));
+        Optional.ofNullable(account.getOwnerName()).map(String::trim).filter(s -> !s.isBlank()).ifPresent(s -> registeredOwnerNames.remove(s.toLowerCase()));
     }
 
     // --- Find ---
 
-    public BankAccount findByAccountNumber(String accountNumber) {
+    public BankAccount getByAccountNumber(String accountNumber) {
         BankAccount account = accountMap.get(accountNumber);
         if (account == null) {
             throw new AccountNotFoundException(accountNumber);
@@ -46,7 +46,7 @@ public class AccountRepository {
         return account;
     }
 
-    public Optional<BankAccount> findByAccountNumberSafe(String accountNumber) {
+    public Optional<BankAccount> findByAccountNumber(String accountNumber) {
         return Optional.ofNullable(accountMap.get(accountNumber));
     }
 
@@ -97,6 +97,7 @@ public class AccountRepository {
         accounts.clear();
         accountMap.clear();
         registeredEmails.clear();
+        registeredOwnerNames.clear();
     }
 
     public void saveAll(List<BankAccount> loaded) {

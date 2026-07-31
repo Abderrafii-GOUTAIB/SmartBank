@@ -1,4 +1,4 @@
-package org.example.service;
+package org.example.training;
 
 import java.util.*;
 import java.util.function.*;

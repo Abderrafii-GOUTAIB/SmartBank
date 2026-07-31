@@ -1,4 +1,4 @@
-package org.example.service;
+package org.example.training;
 
 // ================================================
 // GENERIC CLASS WITH TWO TYPE PARAMETERS

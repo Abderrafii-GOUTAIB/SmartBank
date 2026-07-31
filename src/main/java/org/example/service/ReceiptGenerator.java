@@ -36,8 +36,6 @@ public class ReceiptGenerator {
 
         sb.append(divider()).append('\n');
         sb.append(centerText("Thank you for banking with us!")).append('\n');
-
-        sb.append(centerText("Thank you for banking with us!")).append('\n');
         sb.append(bottomBorder()).append('\n');
 
         return sb.toString();

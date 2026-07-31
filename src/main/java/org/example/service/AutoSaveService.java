@@ -45,7 +45,7 @@ public class AutoSaveService {
                 System.out.println("  💾 [auto-save] Changes saved.");
             }
         }catch (Exception e) {
-            System.out.println(" ⚠\uFE0F  [auto-save] failed: \" + e.getMessage()");
+            System.out.println(" ⚠\uFE0F  [auto-save] failed: " + e.getMessage());
         }
 
 

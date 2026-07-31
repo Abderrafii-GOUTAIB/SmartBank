@@ -1,4 +1,4 @@
-package org.example.service;
+package org.example.training;
 
 import org.example.model.AccountStatus;
 import org.example.model.BankAccount;
@@ -17,15 +17,7 @@ public class StreamAccountService {
     // ================================================
     // FILTER — keep elements that match a condition
     // ================================================
-    // Replaces: our manual filter() utility method
 
-    // Before (manual):
-    //   List<BankAccount> result = new ArrayList<>();
-    //   for (BankAccount acc : accounts) {
-    //       if (acc.isActive()) result.add(acc);
-    //   }
-
-    // After (stream):
     public static List<BankAccount> getActiveAccounts(List<BankAccount> accounts) {
         return accounts.stream()          // 1. create stream from list
                 .filter(BankAccount::isActive)  // 2. keep only active (Predicate)
@@ -53,15 +45,7 @@ public class StreamAccountService {
     // ================================================
     // MAP — transform each element
     // ================================================
-    // Replaces: our manual map() utility method
 
-    // Before (manual):
-    //   List<String> names = new ArrayList<>();
-    //   for (BankAccount acc : accounts) {
-    //       names.add(acc.getOwnerName());
-    //   }
-
-    // After (stream):
     public static List<String> getAllNames(List<BankAccount> accounts) {
         return accounts.stream()
                 .map(BankAccount::getOwnerName)  // transform Account → String
@@ -131,13 +115,6 @@ public class StreamAccountService {
     // COUNT — how many match
     // ================================================
 
-    // Before (manual):
-    //   int count = 0;
-    //   for (BankAccount acc : accounts) {
-    //       if (acc.isActive()) count++;
-    //   }
-
-    // After (stream):
     public static long countActive(List<BankAccount> accounts) {
         return accounts.stream()
                 .filter(BankAccount::isActive)
@@ -154,11 +131,6 @@ public class StreamAccountService {
     // SUM / AVERAGE / MIN / MAX — numeric operations
     // ================================================
 
-    // Before (manual):
-    //   double total = 0;
-    //   for (BankAccount acc : accounts) { total += acc.getBalance(); }
-
-    // After (stream):
     public static double getTotalBalance(List<BankAccount> accounts) {
         return accounts.stream()
                 .mapToDouble(BankAccount::getBalance)  // Stream<Account> → DoubleStream
@@ -190,13 +162,6 @@ public class StreamAccountService {
     // FIND — get the first match
     // ================================================
 
-    // Before (manual):
-    //   for (BankAccount acc : accounts) {
-    //       if (acc.getBalance() > 5000) return acc;
-    //   }
-    //   return null;
-
-    // After (stream):
     public static BankAccount findRichestActive(List<BankAccount> accounts) {
         return accounts.stream()
                 .filter(BankAccount::isActive)
@@ -251,21 +216,16 @@ public class StreamAccountService {
         return accounts.stream()
                 .map(BankAccount::getOwnerName)
                 .reduce("", (a, b) -> a.isEmpty() ? b : a + ", " + b);
-        // Better way (Collectors.joining):
-        // .collect(Collectors.joining(", "));
     }
 
     // ================================================
     // COLLECT — gather results into a collection
     // ================================================
 
-    // toList() — we've been using this (Java 16+)
-    // For older Java or mutable lists:
     public static List<BankAccount> getActiveAccountsMutable(List<BankAccount> accounts) {
         return accounts.stream()
                 .filter(BankAccount::isActive)
-                .collect(Collectors.toList());  // returns mutable ArrayList
-        // vs .toList() which returns immutable list
+                .collect(Collectors.toList());  // mutable ArrayList (vs immutable .toList())
     }
 
     // Joining strings

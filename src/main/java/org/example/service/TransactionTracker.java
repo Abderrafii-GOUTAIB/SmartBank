@@ -14,7 +14,7 @@ public class TransactionTracker {
 
     private final Map<String, Double> dailyDeposits;
     private final Set<String> transactionCategories;
-    private final int MAX_TRANSACTION_PER_DAY = BankConfig.getInstance().getMaxTransactionsPerDay();
+    private final int MAX_TRANSACTIONS_PER_DAY = BankConfig.getInstance().getMaxTransactionsPerDay();
 
     public TransactionTracker() {
         this.dailyDeposits = new HashMap<>();
@@ -25,7 +25,7 @@ public class TransactionTracker {
 
     public void recordDeposit(String accountNumber, double amount) {
         long todayCount = dailyDeposits.getOrDefault(accountNumber, 0.0) > 0 ? 1 : 0;
-        if (todayCount >= MAX_TRANSACTION_PER_DAY) {
+        if (todayCount >= MAX_TRANSACTIONS_PER_DAY) {
             throw new DailyLimitExceededException(accountNumber, amount,
                     BankConfig.getInstance().getMaxTransactionsPerDay(), todayCount);
         }
@@ -59,7 +59,7 @@ public class TransactionTracker {
 
         dailyDeposits.forEach((accNum, total) -> {
             if (total > 0) {
-                String name = repo.findByAccountNumberSafe(accNum)
+                String name = repo.findByAccountNumber(accNum)
                         .map(BankAccount::getOwnerName)
                         .orElse("Unknown");
                 System.out.printf("  %s (%s): $%,.2f%n", accNum, name, total);

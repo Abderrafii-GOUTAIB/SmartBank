@@ -1,4 +1,4 @@
-package org.example.service;
+package org.example.training;
 
 import org.example.model.BankAccount;
 import org.example.model.Transaction;
@@ -76,15 +76,6 @@ public class TransactionProcessor {
     // 🆕 LAMBDA FILTERS — replacing anonymous classes
     // ================================================
 
-    // --- BEFORE (anonymous class from Step 21): ---
-    // public static final TransactionFilter DEPOSITS_ONLY = new TransactionFilter() {
-    //     @Override
-    //     public boolean accept(Transaction transaction) {
-    //         return transaction.getType() == TransactionType.DEPOSIT;
-    //     }
-    // };
-
-    // --- AFTER (lambda — same behavior, 1 line): ---
     public static final TransactionFilter DEPOSITS_ONLY =
             txn -> txn.getType() == TransactionType.DEPOSIT;
 
@@ -97,20 +88,8 @@ public class TransactionProcessor {
     public static final TransactionFilter DEBITS_ONLY =
             txn -> txn.getType().isDebit();
 
-    // 🆕 Lambda with captured variable (closure)
-    // --- BEFORE: ---
-    // public static TransactionFilter aboveAmount(double threshold) {
-    //     return new TransactionFilter() {
-    //         @Override
-    //         public boolean accept(Transaction transaction) {
-    //             return transaction.getAmount() > threshold;
-    //         }
-    //     };
-    // }
-
-    // --- AFTER: ---
+    // Lambda with a captured variable (closure) — 'threshold' is effectively final
     public static TransactionFilter aboveAmount(double threshold) {
-        // 'threshold' is effectively final — captured by the lambda
         return txn -> txn.getAmount() > threshold;
     }
 
@@ -135,15 +114,6 @@ public class TransactionProcessor {
     // 🆕 LAMBDA TRANSFORMERS
     // ================================================
 
-    // --- BEFORE (anonymous class): ---
-    // public static final TransactionTransformer RECEIPT_FORMAT = new TransactionTransformer() {
-    //     @Override
-    //     public String transform(Transaction transaction) {
-    //         return String.format("  [%s] %s %s", ...);
-    //     }
-    // };
-
-    // --- AFTER (lambda): ---
     public static final TransactionTransformer RECEIPT_FORMAT =
             txn -> String.format("  [%-12s] %s  %s",
                     txn.getType().displayName(),
@@ -170,15 +140,6 @@ public class TransactionProcessor {
     // 🆕 LAMBDA COMPARATORS — replacing anonymous Comparator classes
     // ================================================
 
-    // --- BEFORE: ---
-    // sorted.sort(new Comparator<Transaction>() {
-    //     @Override
-    //     public int compare(Transaction a, Transaction b) {
-    //         return Double.compare(b.getAmount(), a.getAmount());
-    //     }
-    // });
-
-    // --- AFTER: ---
     public static List<Transaction> sortByAmountDescending(List<Transaction> transactions) {
         List<Transaction> sorted = new ArrayList<>(transactions);
         sorted.sort((a, b) -> Double.compare(b.getAmount(), a.getAmount()));
@@ -195,17 +156,6 @@ public class TransactionProcessor {
     // 🆕 FILTER COMBINATORS — now with lambdas
     // ================================================
 
-    // --- BEFORE (anonymous class): ---
-    // public static TransactionFilter and(TransactionFilter f1, TransactionFilter f2) {
-    //     return new TransactionFilter() {
-    //         @Override
-    //         public boolean accept(Transaction transaction) {
-    //             return f1.accept(transaction) && f2.accept(transaction);
-    //         }
-    //     };
-    // }
-
-    // --- AFTER (lambda): ---
     public static TransactionFilter and(TransactionFilter f1, TransactionFilter f2) {
         return txn -> f1.accept(txn) && f2.accept(txn);
     }
