@@ -1,6 +1,7 @@
 package org.example.service;
 
 import org.example.model.BankEvent;
+import org.example.model.BankConfig;
 import org.example.model.TransactionType;
 
 /**

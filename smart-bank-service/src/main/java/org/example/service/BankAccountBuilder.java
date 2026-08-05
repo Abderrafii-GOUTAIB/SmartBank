@@ -3,6 +3,7 @@ package org.example.service;
 import org.example.model.AccountType;
 import org.example.model.AccountTypeChoice;
 import org.example.model.BankAccount;
+import org.example.model.BankConfig;
 import org.example.model.exception.AccountException;
 import org.example.model.exception.InvalidAmountException;
 

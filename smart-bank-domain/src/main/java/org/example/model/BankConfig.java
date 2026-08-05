@@ -1,4 +1,4 @@
-package org.example.service;
+package org.example.model;
 /**
  * Singleton — one config object for the entire bank.
  * Centralizes all bank-wide constants in one place.

@@ -1,8 +1,5 @@
 package org.example.model;
 
-import org.example.service.InterestStrategies;
-import org.example.service.InterestStrategy;
-
 public sealed interface AccountType permits AccountType.Savings, AccountType.Checking, AccountType.Business, AccountType.Investment, AccountType.Premium {
     String displayName();
 

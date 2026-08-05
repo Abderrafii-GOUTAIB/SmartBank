@@ -1,6 +1,7 @@
 package org.example.service;
 
 import org.example.model.BankAccount;
+import org.example.model.BankConfig;
 import org.example.model.TransactionType;
 import org.example.model.exception.DailyLimitExceededException;
 

@@ -4,7 +4,6 @@ import org.example.model.exception.AccountFrozenException;
 import org.example.model.exception.InsufficientFundsException;
 import org.example.model.exception.InvalidAmountException;
 import org.example.model.exception.InvalidStatusTransitionException;
-import org.example.service.BankConfig;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

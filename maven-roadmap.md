@@ -16,10 +16,10 @@ STAGE 2 — Tooling: Maven, Git, Docker  🔄 IN PROGRESS
 ═══════════════════════════════════════════════════════
 
 🟢 PART A — MAVEN (full teaching)          🔄 IN PROGRESS
-→  Step 1:  Maven Fundamentals              ← CURRENT
-⬜ Step 2:  Dependency Management (deep)
-⬜ Step 3:  Build Lifecycle & Plugins
-⬜ Step 4:  Multi-Module Projects
+✅ Step 1:  Maven Fundamentals              
+✅ Step 2:  Dependency Management (deep) 
+✅ Step 3:  Build Lifecycle & Plugins 
+⬜ Step 4:  Multi-Module Projects ← CURRENT
 ⬜ Step 5:  Profiles, Properties & Settings
 
 🟡 PART B — GIT (gaps only)                ⬜
