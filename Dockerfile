@@ -1,32 +1,3 @@
-# FILE: Dockerfile   [NEW — at project root]
-
-# ── BASE IMAGE ──────────────────────────────────────────────
-# start from a minimal image with Java 21 runtime only (JRE, not JDK)
-# → we only need to RUN the JAR, not compile it
-FROM eclipse-temurin:21-jre-alpine
-
-# ── WORKDIR ─────────────────────────────────────────────────
-# everything happens in /app inside the container
-WORKDIR /app
-
-# ── COPY THE JAR ────────────────────────────────────────────
-# copy the pre-built fat JAR into the image
-# (this changes every build → near the bottom)
-COPY smart-bank-app/target/smart-bank-app-1.0-SNAPSHOT.jar app.jar
-
-# ── DATA DIRECTORY ──────────────────────────────────────────
-# SmartBank writes to smartbank-data/ — create it
-RUN mkdir -p /app/smartbank-data
-
-# ── ENTRYPOINT ──────────────────────────────────────────────
-# when the container STARTS, run the JAR
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
-
-
-
-
-
 # FILE: Dockerfile   [multi-stage version]
 
 # ═══════════════════════════════════════════════════════════
