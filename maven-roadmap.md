@@ -33,8 +33,8 @@ STAGE 2 — Tooling: Maven, Git, Docker  🔄 IN PROGRESS
 ✅ Step 11: Docker Mental Model (deep)
 ✅ Step 12: Writing Dockerfiles Properly
 ✅ Step 13: Multi-Stage Builds                   
-⬜ Step 14: Image Optimization                   🔄 IN PROGRESS
-⬜ Step 15: Docker Networking & Volumes
+✅ Step 14: Image Optimization                   
+⬜ Step 15: Docker Networking & Volumes        🔄 IN PROGRESS
 ⬜ Step 16: Docker Compose
 
 🟣 PART D — INTEGRATION                    ⬜
@@ -44,9 +44,9 @@ STAGE 2 — Tooling: Maven, Git, Docker  🔄 IN PROGRESS
 ⬜ Step 20: Stage 2 Review
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Progress: 13/20 steps (Stage 2 complete: 65%)
-Current:  Part C — Docker, Step 13
-Next:     Image Optimization
+Progress: 14/20 steps (Stage 2 complete: 70%)
+Current:  Part C — Docker, Step 14
+Next:     Docker Networking & Volumes
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ═══════════════════════════════════════════════════════
