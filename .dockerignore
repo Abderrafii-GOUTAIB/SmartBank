@@ -1,0 +1,7 @@
+# don't copy these into the build context — they bloat the image
+target/
+!smart-bank-app/target/*.jar   # but DO allow the final jar
+.git/
+.idea/
+*.md
+smartbank-data/
