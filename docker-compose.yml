@@ -1,0 +1,13 @@
+services:
+  app:
+    build: .                          # build from the Dockerfile here
+    image: smartbank:1.0
+    container_name: smartbank
+    stdin_open: true                  # keep stdin open (-i)
+    tty: true                         # allocate a terminal (-t)
+    volumes:
+      - smartbank-data:/app/smartbank-data   # persist data
+    mem_limit: 512m                   # memory cap
+
+volumes:
+  smartbank-data:                     # declare the named volume

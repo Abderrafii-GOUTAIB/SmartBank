@@ -34,19 +34,19 @@ STAGE 2 — Tooling: Maven, Git, Docker  🔄 IN PROGRESS
 ✅ Step 12: Writing Dockerfiles Properly
 ✅ Step 13: Multi-Stage Builds                   
 ✅ Step 14: Image Optimization                   
-⬜ Step 15: Docker Networking & Volumes        🔄 IN PROGRESS
-⬜ Step 16: Docker Compose
+✅ Step 15: Docker Networking & Volumes        
+✅ Step 16: Docker Compose
 
 🟣 PART D — INTEGRATION                    ⬜
-⬜ Step 17: Build + Containerize Pipeline
-⬜ Step 18: CI Preview — GitHub Actions
-⬜ Step 19: SmartBank Fully Tooled
+✅ Step 17: Build + Containerize Pipeline
+✅ Step 18: CI Preview — GitHub Actions
+⬜ Step 19: SmartBank Fully Tooled                   🔄 IN PROGRESS
 ⬜ Step 20: Stage 2 Review
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Progress: 14/20 steps (Stage 2 complete: 70%)
-Current:  Part C — Docker, Step 14
-Next:     Docker Networking & Volumes
+Progress: 18/20 steps (Stage 2 complete: 90%)
+Current:  Part D — Docker, Step 19
+Next:     Step 20: Stage 2 Review
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ═══════════════════════════════════════════════════════

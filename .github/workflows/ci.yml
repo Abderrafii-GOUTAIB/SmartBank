@@ -1,0 +1,35 @@
+# FILE: .github/workflows/ci.yml   [NEW]
+
+name: SmartBank CI
+
+# WHEN to run: on every push and pull request
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest          # a fresh Linux machine
+
+    steps:
+      # 1. get the code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. set up Java 21
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven               # cache deps for speed
+
+      # 3. build + run tests
+      - name: Build and test
+        run: mvn clean verify
+
+      # 4. build the Docker image (verify it builds)
+      - name: Build Docker image
+        run: docker build -t smartbank:ci .
