@@ -2,11 +2,13 @@ package org.example.service;
 
 import org.example.model.BankAccount;
 import org.example.model.exception.AccountNotFoundException;
+import org.springframework.stereotype.Repository;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Repository
 public class AccountRepository {
 
 

@@ -25,10 +25,18 @@
         <prod.data.path>/var/lib/smartbank/data</prod.data.path>
         <environment.dev>dev</environment.dev>
         <environment.prod>prod</environment.prod>
+        <spring.boot.version>3.3.5</spring.boot.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring.boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>    <!-- ← import the whole BOM -->
+            </dependency>
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>

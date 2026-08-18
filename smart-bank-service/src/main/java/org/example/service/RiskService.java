@@ -1,8 +1,11 @@
 package org.example.service;
 
+import org.springframework.stereotype.Service;
+
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+@Service
 public class RiskService {
 
     private final Set<String> flaggedAccounts;

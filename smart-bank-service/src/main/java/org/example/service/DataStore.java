@@ -4,6 +4,7 @@ import org.example.model.AccountStatus;
 import org.example.model.BankAccount;
 import org.example.model.Transaction;
 import org.example.model.exception.StorageException;
+import org.springframework.stereotype.Repository;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Repository
 public class DataStore implements StoragePort {
 
     private static final Path DATA_DIR          = Path.of("smartbank-data");

@@ -4,13 +4,14 @@ import org.example.model.BankAccount;
 import org.example.model.BankConfig;
 import org.example.model.TransactionType;
 import org.example.model.exception.DailyLimitExceededException;
+import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-
+@Service
 public class TransactionTracker {
 
     private final Map<String, Double> dailyDeposits;

@@ -2,11 +2,12 @@ package org.example.service;
 
 import org.example.model.*;
 import org.example.model.exception.*;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
+@Service
 public class AccountService {
 
     // Each dependency has ONE job — injected via constructor
