@@ -1,5 +1,8 @@
 package org.example.service;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -26,6 +29,7 @@ public class AutoSaveService {
         });
     }
 
+    @PostConstruct
     public void start() {
         scheduler.scheduleAtFixedRate(
                 this::autoSave,        // the task
@@ -51,6 +55,7 @@ public class AutoSaveService {
 
     }
 
+    @PreDestroy
     public void stop() {
         scheduler.shutdown();    // stop the scheduler cleanly
         System.out.println("  💾 Auto-save stopped.");
