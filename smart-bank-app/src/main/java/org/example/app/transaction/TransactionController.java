@@ -1,5 +1,6 @@
 package org.example.app.transaction;
 
+import jakarta.validation.Valid;
 import org.example.app.transaction.dto.AmountRequest;
 import org.example.app.transaction.dto.TransactionResponse;
 import org.example.model.TransactionResult;
@@ -23,7 +24,7 @@ public class TransactionController {
     @PostMapping("/{accountNumber}/deposits")
     public ResponseEntity<TransactionResponse> deposit(
             @PathVariable String accountNumber,
-            @RequestBody AmountRequest request) {
+            @Valid @RequestBody AmountRequest request) {
 
         TransactionResult result = accountService.depositByAccountNumber(
                 accountNumber, request.amount());
@@ -34,7 +35,7 @@ public class TransactionController {
     @PostMapping("/{accountNumber}/withdrawals")
     public ResponseEntity<TransactionResponse> withdraw(
             @PathVariable String accountNumber,
-            @RequestBody AmountRequest request) {
+            @Valid @RequestBody AmountRequest request) {
 
         TransactionResult result = accountService.withdrawByAccountNumber(
                 accountNumber, request.amount());

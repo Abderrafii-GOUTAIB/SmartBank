@@ -5,10 +5,12 @@ import org.example.app.common.dto.ErrorResponse;
 import org.example.model.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.Instant;
+import java.util.stream.Collectors;
 
 /**
  * Centralized exception handling for ALL controllers.
@@ -61,6 +63,16 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BankException.class)
     public ResponseEntity<ErrorResponse> handleBankException(BankException e) {
         return build(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(
+            MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldErrors().stream()
+                .map(err -> err.getField() + ": " + err.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+
+        return build(HttpStatus.BAD_REQUEST, message);
     }
 
     // --- helper: build a consistent error response ---

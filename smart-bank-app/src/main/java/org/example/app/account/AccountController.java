@@ -1,6 +1,7 @@
 package org.example.app.account;
 
 
+import jakarta.validation.Valid;
 import org.example.app.account.dto.AccountResponse;
 import org.example.app.account.dto.OpenAccountRequest;
 import org.example.model.AccountType;
@@ -31,7 +32,7 @@ public class AccountController {
     }
 
     @PostMapping
-    public ResponseEntity<AccountResponse> openAccount(@RequestBody OpenAccountRequest request) {
+    public ResponseEntity<AccountResponse> openAccount(@Valid @RequestBody OpenAccountRequest request) {
 
         AccountType accountType = AccountTypeFactory.create(request.accountType());
         BankAccount account = accountService.openAccount(

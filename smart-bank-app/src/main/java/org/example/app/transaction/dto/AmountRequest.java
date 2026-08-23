@@ -1,10 +1,10 @@
 package org.example.app.transaction.dto;
 
-/**
- * Request DTO for deposit/withdraw — just an amount.
- * A record → immutable input.
- */
-public record AmountRequest(
-        double amount
-) {}
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
+public record AmountRequest(
+        @NotNull(message = "Amount is required")
+        @Positive(message = "Amount must be positive")
+        Double amount
+) {}

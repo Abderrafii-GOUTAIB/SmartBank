@@ -110,19 +110,15 @@ public class AccountService {
 
     public TransactionResult depositByAccountNumber(String accountNumber, double amount) {
         BankAccount account = repository.getByAccountNumber(accountNumber);
-        try {
-            account.deposit(amount);
-            publish(new BankEvent.TransactionEvent(
-                    account.getAccountNumber(), TransactionType.DEPOSIT, amount));
-            markDirty();
-            return new TransactionResult.Success(
-                    account.getAccountNumber(), amount,
-                    account.getBalance(), TransactionType.DEPOSIT);
-        } catch (AccountFrozenException | InvalidAmountException e) {
-            return new TransactionResult.Failure(
-                    account.getAccountNumber(), amount,
-                    e.getErrorCode(), e.getMessage());
-        }
+
+        account.deposit(amount);
+        publish(new BankEvent.TransactionEvent(
+                account.getAccountNumber(), TransactionType.DEPOSIT, amount));
+        markDirty();
+        return new TransactionResult.Success(
+                account.getAccountNumber(), amount,
+                account.getBalance(), TransactionType.DEPOSIT);
+
     }
 
     // --- Withdrawal ---
@@ -159,19 +155,15 @@ public class AccountService {
 
     public TransactionResult withdrawByAccountNumber(String accountNumber, double amount) {
         BankAccount account = repository.getByAccountNumber(accountNumber);
-        try {
-            account.withdraw(amount);
-            publish(new BankEvent.TransactionEvent(
-                    account.getAccountNumber(), TransactionType.WITHDRAWAL, amount));
-            markDirty();
-            return new TransactionResult.Success(
-                    account.getAccountNumber(), amount,
-                    account.getBalance(), TransactionType.WITHDRAWAL);
-        } catch (InsufficientFundsException | AccountFrozenException | InvalidAmountException e) {
-            return new TransactionResult.Failure(
-                    account.getAccountNumber(), amount,
-                    e.getErrorCode(), e.getMessage());
-        }
+
+        account.withdraw(amount);
+        publish(new BankEvent.TransactionEvent(
+                account.getAccountNumber(), TransactionType.WITHDRAWAL, amount));
+        markDirty();
+        return new TransactionResult.Success(
+                account.getAccountNumber(), amount,
+                account.getBalance(), TransactionType.WITHDRAWAL);
+
     }
 
     // --- Transfer ---
