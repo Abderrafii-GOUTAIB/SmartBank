@@ -1,9 +1,8 @@
-package org.example.app;
+package org.example.app.account;
 
 
-import org.example.app.api.dto.AccountResponse;
-import org.example.app.api.dto.OpenAccountRequest;
-import org.example.app.api.mapper.AccountMapper;
+import org.example.app.account.dto.AccountResponse;
+import org.example.app.account.dto.OpenAccountRequest;
 import org.example.model.AccountType;
 import org.example.model.BankAccount;
 import org.example.service.AccountService;
@@ -56,8 +55,8 @@ public class AccountController {
         BankAccount account = accountService.getRepository().getByAccountNumber(accountNumber);
         AccountResponse response = accountMapper.toResponse(account);
 
-        return ResponseEntity.ok(response);   // 200 OK
+        return ResponseEntity.ok(response);
     }
 
-
 }
+

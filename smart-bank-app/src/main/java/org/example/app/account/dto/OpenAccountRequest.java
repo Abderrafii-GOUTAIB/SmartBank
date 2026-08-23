@@ -1,4 +1,4 @@
-package org.example.app.api.dto;
+package org.example.app.account.dto;
 
 public record OpenAccountRequest(
         String ownerName,
@@ -7,3 +7,4 @@ public record OpenAccountRequest(
         String accountType
 ) {
 }
+

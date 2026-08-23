@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+
 @Service
 public class AccountService {
 
@@ -107,6 +108,23 @@ public class AccountService {
         }
     }
 
+    public TransactionResult depositByAccountNumber(String accountNumber, double amount) {
+        BankAccount account = repository.getByAccountNumber(accountNumber);
+        try {
+            account.deposit(amount);
+            publish(new BankEvent.TransactionEvent(
+                    account.getAccountNumber(), TransactionType.DEPOSIT, amount));
+            markDirty();
+            return new TransactionResult.Success(
+                    account.getAccountNumber(), amount,
+                    account.getBalance(), TransactionType.DEPOSIT);
+        } catch (AccountFrozenException | InvalidAmountException e) {
+            return new TransactionResult.Failure(
+                    account.getAccountNumber(), amount,
+                    e.getErrorCode(), e.getMessage());
+        }
+    }
+
     // --- Withdrawal ---
 
     public TransactionResult withdraw(BankAccount account, double amount) {
@@ -139,12 +157,29 @@ public class AccountService {
         }
     }
 
+    public TransactionResult withdrawByAccountNumber(String accountNumber, double amount) {
+        BankAccount account = repository.getByAccountNumber(accountNumber);
+        try {
+            account.withdraw(amount);
+            publish(new BankEvent.TransactionEvent(
+                    account.getAccountNumber(), TransactionType.WITHDRAWAL, amount));
+            markDirty();
+            return new TransactionResult.Success(
+                    account.getAccountNumber(), amount,
+                    account.getBalance(), TransactionType.WITHDRAWAL);
+        } catch (InsufficientFundsException | AccountFrozenException | InvalidAmountException e) {
+            return new TransactionResult.Failure(
+                    account.getAccountNumber(), amount,
+                    e.getErrorCode(), e.getMessage());
+        }
+    }
+
     // --- Transfer ---
 
     public TransferResult transfer(String fromAccNum, String toAccNum, double amount) {
         try {
             BankAccount from = repository.getByAccountNumber(fromAccNum);
-            BankAccount to   = repository.getByAccountNumber(toAccNum);
+            BankAccount to = repository.getByAccountNumber(toAccNum);
 
             if (fromAccNum.equals(toAccNum)) {
                 System.out.println("  ❌ Cannot transfer to the same account.");
@@ -155,7 +190,7 @@ public class AccountService {
             // Decide lock order by account number (alphabetical/natural order).
             // BOTH threads will lock the lower number first, higher second.
             // → no circular wait → no deadlock possible.
-            BankAccount firstLock  = fromAccNum.compareTo(toAccNum) < 0 ? from : to;
+            BankAccount firstLock = fromAccNum.compareTo(toAccNum) < 0 ? from : to;
             BankAccount secondLock = fromAccNum.compareTo(toAccNum) < 0 ? to : from;
 
             synchronized (firstLock) {           // lock lower account number first

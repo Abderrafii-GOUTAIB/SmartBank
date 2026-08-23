@@ -1,4 +1,4 @@
-package org.example.app.api.dto;
+package org.example.app.account.dto;
 
 /**
  * Response DTO — what the API EXPOSES about an account.
@@ -17,3 +17,4 @@ public record AccountResponse (
         String accountType,
         String status
 ){}
+

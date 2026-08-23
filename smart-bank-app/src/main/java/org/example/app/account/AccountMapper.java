@@ -1,6 +1,6 @@
-package org.example.app.api.mapper;
+package org.example.app.account;
 
-import org.example.app.api.dto.AccountResponse;
+import org.example.app.account.dto.AccountResponse;
 import org.example.model.BankAccount;
 import org.springframework.stereotype.Component;
 
@@ -16,4 +16,7 @@ public class AccountMapper {
                 account.getStatus().name()
         );
     }
+
+
 }
+
