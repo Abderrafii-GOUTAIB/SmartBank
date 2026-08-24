@@ -4,6 +4,7 @@ package org.example.app.account;
 import jakarta.validation.Valid;
 import org.example.app.account.dto.AccountResponse;
 import org.example.app.account.dto.OpenAccountRequest;
+import org.example.model.AccountStatus;
 import org.example.model.AccountType;
 import org.example.model.BankAccount;
 import org.example.service.AccountService;
@@ -11,6 +12,8 @@ import org.example.service.AccountTypeFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * REST controller for account resources.
@@ -21,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/api/accounts")
+@RequestMapping("/api/v1/accounts")
 public class AccountController {
     private final AccountService accountService;
     private final AccountMapper accountMapper;
@@ -57,6 +60,23 @@ public class AccountController {
         AccountResponse response = accountMapper.toResponse(account);
 
         return ResponseEntity.ok(response);
+    }
+
+
+    @GetMapping
+    public ResponseEntity<List<AccountResponse>> listAccounts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+
+        List<BankAccount> all = accountService.getRepository().getAll();
+
+        int from = page * size;
+        int to = Math.min(from + size, all.size());
+        List<AccountResponse> pageContent = all.subList(from, to).stream()
+                .map(accountMapper::toResponse)
+                .toList();
+
+        return ResponseEntity.ok(pageContent);
     }
 
 }
