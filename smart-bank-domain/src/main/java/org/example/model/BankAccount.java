@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.UUID;
 
 public class BankAccount implements Displayable {
 
@@ -22,7 +22,7 @@ public class BankAccount implements Displayable {
 
     // PRIVATE STATIC — only this class manages the counter
     // No one outside should touch the ID generator
-    private static final AtomicInteger nextId = new AtomicInteger(1);
+    // Account numbers are now UUIDs (unique, no collision risk)
 
     // PUBLIC STATIC FINAL — everyone can READ the bank name, no one can change it
     public static final String BANK_NAME = BankConfig.getInstance().getBankName();
@@ -60,6 +60,48 @@ public class BankAccount implements Displayable {
         this.createdAt = LocalDateTime.now();
     }
 
+    // Rebuild an existing account from storage without generating a new identity.
+    // PRIVATE — only the factory method rehydrate() should call this.
+    private BankAccount(String accountNumber,
+                       String ownerName,
+                       String email,
+                       double balance,
+                       AccountType accountType,
+                       AccountStatus status,
+                       LocalDateTime createdAt) {
+        if (accountNumber == null || accountNumber.isBlank()) {
+            throw new IllegalArgumentException("Account number cannot be empty.");
+        }
+        if (ownerName == null || ownerName.isBlank()) {
+            throw new IllegalArgumentException("Owner name cannot be empty.");
+        }
+        if (balance < 0) {
+            throw new IllegalArgumentException("Balance cannot be negative.");
+        }
+        this.accountNumber = accountNumber;
+        this.ownerName = ownerName;
+        this.email = (email == null) ? "" : email.toLowerCase().trim();
+        this.balance = balance;
+        this.accountType = Objects.requireNonNull(accountType, "Account type cannot be null.");
+        this.status = Objects.requireNonNull(status, "Status cannot be null.");
+        this.createdAt = Objects.requireNonNull(createdAt, "Creation date cannot be null.");
+        this.transactions = new ArrayList<>();
+    }
+
+    /**
+     * Factory method to safely rehydrate an account from persistence.
+     * Use this instead of calling the constructor directly.
+     */
+    public static BankAccount rehydrate(String accountNumber,
+                                        String ownerName,
+                                        String email,
+                                        double balance,
+                                        AccountType accountType,
+                                        AccountStatus status,
+                                        LocalDateTime createdAt) {
+        return new BankAccount(accountNumber, ownerName, email, balance, accountType, status, createdAt);
+    }
+
     public BankAccount(String ownerName, String email, double initialBalance) {
         this(ownerName, email, initialBalance, new AccountType.Savings());
     }
@@ -70,13 +112,14 @@ public class BankAccount implements Displayable {
 
     // PRIVATE STATIC — internal utility, no one outside needs this
     private static String generateAccountNumber() {
-        int id = nextId.getAndIncrement();
-        return String.format("%08d", id);
+        return UUID.randomUUID().toString();
     }
+    
 
     // PUBLIC STATIC — useful query, safe to expose
     public static int getTotalAccounts() {
-        return nextId.get() - 1;
+        // Not applicable for UUID-based account numbers
+        return -1;
     }
 
     // --- PUBLIC methods — the API we expose ---
