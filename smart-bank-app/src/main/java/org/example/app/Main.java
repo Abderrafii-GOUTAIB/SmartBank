@@ -16,7 +16,7 @@ public class Main {
 
         Scanner scanner = new Scanner(System.in);
         StoragePort storage = new DataStore();
-        AccountRepository repository = new AccountRepository();
+        AccountRepository repository = new InMemoryAccountRepository();
         RiskService riskService = new RiskService();
         TransactionTracker tracker = new TransactionTracker();
         AccountService bankService = new AccountService(repository, riskService, tracker, storage);
