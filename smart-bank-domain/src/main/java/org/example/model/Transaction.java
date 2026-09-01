@@ -46,6 +46,11 @@ public class Transaction implements Comparable<Transaction> {
         this.dateTime = dateTime;
     }
 
+    public static Transaction rehydrate(String accountNumber, TransactionType type,
+                                      double amount, double balanceAfter, LocalDateTime dateTime) {
+        return new Transaction(accountNumber, type, amount, balanceAfter, dateTime);
+    }
+
     @Override
     public int compareTo(Transaction other) {
         return Integer.compare(this.transactionId, other.transactionId);

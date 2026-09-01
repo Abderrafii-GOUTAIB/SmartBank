@@ -1,4 +1,4 @@
-package org.example.service.persistence;
+package org.example.service.persistence.account;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

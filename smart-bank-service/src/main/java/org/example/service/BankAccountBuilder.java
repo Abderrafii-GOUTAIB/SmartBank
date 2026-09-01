@@ -12,15 +12,15 @@ import java.util.Optional;
 public class BankAccountBuilder {
 
     // ── REQUIRED FIELDS ───────────────────────────────────────────────────────
-    private String      ownerName;
-    private String      email;
+    private String ownerName;
+    private String email;
     private AccountType accountType;
 
     // ── OPTIONAL FIELDS ───────────────────────────────────────────────────────
     // Optional<T> from Step 27 — explicit about what can be absent
-    private double            initialDeposit = 0.0;
-    private Optional<String>  referralCode   = Optional.empty();
-    private Optional<String>  branchCode     = Optional.empty();
+    private double initialDeposit = 0.0;
+    private Optional<String> referralCode = Optional.empty();
+    private Optional<String> branchCode = Optional.empty();
 
     // ── REQUIRED SETTERS — return this for chaining ───────────────────────────
 
@@ -73,7 +73,11 @@ public class BankAccountBuilder {
         validate();
 
         BankAccount account = new BankAccount(ownerName, email,
-                initialDeposit, accountType);
+                0.0, accountType);
+
+        if (initialDeposit > 0) {
+            account.deposit(initialDeposit);  // ← creates a real Transaction
+        }
 
         // log optional fields if present — method reference + Optional (Step 27)
         referralCode.ifPresent(code ->
@@ -106,9 +110,11 @@ public class BankAccountBuilder {
         Optional.ofNullable(email)
                 .filter(e -> !e.isBlank())
                 .filter(e -> !e.contains("@"))
-                .ifPresent(e -> { throw new AccountException(
-                        "Invalid email format: " + e,
-                        "ACC_INVALID_EMAIL", null); });
+                .ifPresent(e -> {
+                    throw new AccountException(
+                            "Invalid email format: " + e,
+                            "ACC_INVALID_EMAIL", null);
+                });
     }
 
     // ── STATIC FACTORY — convenience entry point ──────────────────────────────

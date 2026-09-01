@@ -114,6 +114,11 @@ public class BankAccount implements Displayable {
     private static String generateAccountNumber() {
         return UUID.randomUUID().toString();
     }
+
+    public void restoreTransaction(TransactionType type, double amount,
+                                   double balanceAfter, LocalDateTime dateTime) {
+        transactions.add(new Transaction(accountNumber, type, amount, balanceAfter, dateTime));
+    }
     
 
     // PUBLIC STATIC — useful query, safe to expose

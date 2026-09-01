@@ -8,12 +8,15 @@ import org.example.service.AccountService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/accounts")
 public class TransactionController {
 
     private final AccountService accountService;
     private final TransactionMapper transactionMapper;
+
 
     public TransactionController(AccountService accountService,
                                  TransactionMapper transactionMapper) {
@@ -42,5 +45,6 @@ public class TransactionController {
 
         return ResponseEntity.ok(transactionMapper.toResponse(result));
     }
+
 }
 

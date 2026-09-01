@@ -112,6 +112,7 @@ public class AccountService {
         BankAccount account = repository.getByAccountNumber(accountNumber);
 
         account.deposit(amount);
+        repository.save(account);
         publish(new BankEvent.TransactionEvent(
                 account.getAccountNumber(), TransactionType.DEPOSIT, amount));
         markDirty();
@@ -157,6 +158,7 @@ public class AccountService {
         BankAccount account = repository.getByAccountNumber(accountNumber);
 
         account.withdraw(amount);
+        repository.save(account);
         publish(new BankEvent.TransactionEvent(
                 account.getAccountNumber(), TransactionType.WITHDRAWAL, amount));
         markDirty();
