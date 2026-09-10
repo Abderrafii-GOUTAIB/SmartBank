@@ -4,7 +4,9 @@ import org.example.model.BankAccount;
 import org.example.model.exception.AccountNotFoundException;
 import org.example.service.AccountRepository;
 import org.springframework.context.annotation.Primary;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.List;
@@ -104,9 +106,12 @@ public class JpaAccountRepository implements AccountRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BankAccount> getAll() {
-        return jpaRepository.findAll().stream().map(mapper::toDomain).toList();
+        return jpaRepository.findAllWithTransactions().stream().map(mapper::toDomain).toList();
     }
+
+
 
     @Override
     public List<BankAccount> getAllSorted(Comparator<BankAccount> comparator) {

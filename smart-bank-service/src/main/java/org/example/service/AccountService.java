@@ -3,6 +3,7 @@ package org.example.service;
 import org.example.model.*;
 import org.example.model.exception.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -228,6 +229,24 @@ public class AccountService {
             return TransferResult.failure(fromAccNum, toAccNum, amount, e.getMessage());
         }
     }
+
+    // NEW — REST transfer. NO @Transactional yet — we want to SEE the pain first.
+    @Transactional
+    public TransferResult transferByAccountNumber(String fromAccNum, String toAccNum, double amount) {
+
+        BankAccount from = repository.getByAccountNumber(fromAccNum);
+        from.withdraw(amount);
+        repository.save(from);              // ← DB WRITE #1: sender debited & COMMITTED
+
+        BankAccount to = repository.getByAccountNumber(toAccNum);
+        to.deposit(amount);                 // ← if 'to' is FROZEN, this THROWS here
+        repository.save(to);               // ← DB WRITE #2: never reached on failure
+
+        return TransferResult.success(fromAccNum, toAccNum, amount,
+                from.getBalance(), to.getBalance());
+    }
+
+
 
     // --- Status changes ---
 

@@ -46,7 +46,7 @@ public class AccountEntity {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL,
-            orphanRemoval = true, fetch = FetchType.EAGER)
+            orphanRemoval = true, fetch = FetchType.LAZY)
     private List<TransactionEntity> transactions = new ArrayList<>();
 
     // JPA REQUIRES a no-arg constructor (creates objects via reflection)
