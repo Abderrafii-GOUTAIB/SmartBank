@@ -29,7 +29,7 @@
 │  ├── Spring Boot (auto-configuration, starters)         │
 │  ├── Spring MVC (REST APIs — GET, POST, PUT, DELETE)    │
 │  ├── Spring Data JPA (database without raw SQL)         │
-│  ├── Spring Security (authentication, authorization)    │
+│  ├── Spring Security (authentication, authorization, oauth2) │
 │  ├── Spring Validation (input validation)               │
 │  └── Spring Boot Testing                                │
 │                                                         │
@@ -38,7 +38,7 @@
 │     - GET /accounts/{id} → find account                 │
 │     - POST /transactions → deposit/withdraw             │
 │     - Real PostgreSQL database                          │
-│     - JWT authentication                                │
+│     - JWT authentication  / oAuth2                      │
 │                                                         │
 │                        │                                │
 │                        ▼                                │

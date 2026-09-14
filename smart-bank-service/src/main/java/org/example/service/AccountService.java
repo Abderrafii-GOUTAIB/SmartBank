@@ -1,0 +1,444 @@
+package org.example.service;
+
+import org.example.model.*;
+import org.example.model.exception.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+
+@Service
+public class AccountService {
+
+    // Each dependency has ONE job — injected via constructor
+    private final AccountRepository repository;
+    private final RiskService riskService;
+    private final TransactionTracker tracker;
+    private final StoragePort storage;
+    private final CommandHistory history;
+    private final List<BankEventObserver> observers = new ArrayList<>();
+    private final double MINIMUM_OPENING_DEPOSIT = BankConfig.getInstance().getMinimumOpeningDeposit();
+    private volatile boolean dirty = false;
+
+    public AccountService(AccountRepository repository,
+                          RiskService riskService,
+                          TransactionTracker tracker, StoragePort storage) {
+        this.repository = repository;
+        this.riskService = riskService;
+        this.tracker = tracker;
+        this.storage = storage;
+        this.history = new CommandHistory(storage);
+    }
+
+    public void register(BankEventObserver observer) {
+        observers.add(observer);
+    }
+
+    public void unregister(BankEventObserver observer) {
+        observers.remove(observer);
+    }
+
+    private void publish(BankEvent event) {
+        observers.forEach(o -> o.onEvent(event));
+    }
+
+    public CommandHistory getHistory() {                  // ← NEW
+        return history;
+    }
+
+    // --- Account Creation ---
+
+    public BankAccount openAccount(String ownerName, String email, double initialDeposit,
+                                   AccountType accountType) {
+        if (initialDeposit < MINIMUM_OPENING_DEPOSIT) {
+            throw new InvalidAmountException(null, initialDeposit);
+        }
+        String normalizedEmail = email == null ? "" : email.toLowerCase().trim();
+
+        if (repository.ownerNameExists(ownerName)) throw new DuplicateNameException(ownerName);
+        if (repository.emailExists(normalizedEmail)) throw new DuplicateEmailException(normalizedEmail);
+
+
+        BankAccount account = new BankAccountBuilder()
+                .name(ownerName)
+                .email(normalizedEmail)
+                .type(accountType)
+                .deposit(initialDeposit)
+                .build();
+        repository.save(account);
+        markDirty();
+        System.out.println("  ✅ Account opened: " + account);
+        System.out.println("     Type: " + accountType.displayName()
+                + " (" + String.format("%.1f%%", accountType.interestRate() * 100)
+                + " interest, $" + String.format("%.2f", accountType.monthlyFee()) + "/month)");
+
+        publish(new BankEvent.AccountEvent.AccountCreated(
+                account.getAccountNumber(), ownerName));
+        return account;
+    }
+
+    // --- Deposit ---
+
+    public TransactionResult deposit(BankAccount account, double amount) {
+        try {
+            account.deposit(amount);
+
+            publish(new BankEvent.TransactionEvent(
+                    account.getAccountNumber(), TransactionType.DEPOSIT, amount));
+            markDirty();
+            Transaction txn = account.getLastTransaction();
+            System.out.println(ReceiptGenerator.generateTransactionReceipt(account, txn));
+
+            return new TransactionResult.Success(
+                    account.getAccountNumber(), amount,
+                    account.getBalance(), TransactionType.DEPOSIT);
+
+        } catch (AccountFrozenException e) {
+            System.out.println("  ❌ " + e.toDisplayString());
+            return new TransactionResult.Failure(
+                    account.getAccountNumber(), amount,
+                    e.getErrorCode(), e.getMessage());
+
+        } catch (InvalidAmountException e) {
+            System.out.println(" ❌ " + e.toDisplayString());
+            return new TransactionResult.Failure(
+                    account.getAccountNumber(), amount,
+                    e.getErrorCode(), e.getMessage());
+        }
+    }
+
+    public TransactionResult depositByAccountNumber(String accountNumber, double amount) {
+        BankAccount account = repository.getByAccountNumber(accountNumber);
+
+        account.deposit(amount);
+        repository.save(account);
+        publish(new BankEvent.TransactionEvent(
+                account.getAccountNumber(), TransactionType.DEPOSIT, amount));
+        markDirty();
+        return new TransactionResult.Success(
+                account.getAccountNumber(), amount,
+                account.getBalance(), TransactionType.DEPOSIT);
+
+    }
+
+    // --- Withdrawal ---
+
+    public TransactionResult withdraw(BankAccount account, double amount) {
+        try {
+            account.withdraw(amount);
+
+            publish(new BankEvent.TransactionEvent(
+                    account.getAccountNumber(), TransactionType.WITHDRAWAL, amount));
+            markDirty();
+            Transaction txn = account.getLastTransaction();
+            System.out.println(ReceiptGenerator.generateTransactionReceipt(account, txn));
+
+            return new TransactionResult.Success(
+                    account.getAccountNumber(), amount,
+                    account.getBalance(), TransactionType.WITHDRAWAL);
+
+        } catch (InsufficientFundsException e) {
+            System.out.println("  ❌ " + e.toDisplayString());
+            System.out.printf("     Requested: $%,.2f | Available: $%,.2f | Short: $%,.2f%n",
+                    e.getRequested(), e.getAvailable(), e.getShortfall());
+            return new TransactionResult.Failure(
+                    account.getAccountNumber(), amount,
+                    e.getErrorCode(), e.getMessage());
+
+        } catch (AccountFrozenException | InvalidAmountException e) {
+            System.out.println("  ❌ " + ((BankException) e).toDisplayString());
+            return new TransactionResult.Failure(
+                    account.getAccountNumber(), amount,
+                    e.getErrorCode(), e.getMessage());
+        }
+    }
+
+    public TransactionResult withdrawByAccountNumber(String accountNumber, double amount) {
+        BankAccount account = repository.getByAccountNumber(accountNumber);
+
+        account.withdraw(amount);
+        repository.save(account);
+        publish(new BankEvent.TransactionEvent(
+                account.getAccountNumber(), TransactionType.WITHDRAWAL, amount));
+        markDirty();
+        return new TransactionResult.Success(
+                account.getAccountNumber(), amount,
+                account.getBalance(), TransactionType.WITHDRAWAL);
+
+    }
+
+    // --- Transfer ---
+
+    public TransferResult transfer(String fromAccNum, String toAccNum, double amount) {
+        try {
+            BankAccount from = repository.getByAccountNumber(fromAccNum);
+            BankAccount to = repository.getByAccountNumber(toAccNum);
+
+            if (fromAccNum.equals(toAccNum)) {
+                System.out.println("  ❌ Cannot transfer to the same account.");
+                return TransferResult.failure(fromAccNum, toAccNum, amount, "Same account");
+            }
+
+            // ── DEADLOCK PREVENTION — always lock in a consistent order ──────────
+            // Decide lock order by account number (alphabetical/natural order).
+            // BOTH threads will lock the lower number first, higher second.
+            // → no circular wait → no deadlock possible.
+            BankAccount firstLock = fromAccNum.compareTo(toAccNum) < 0 ? from : to;
+            BankAccount secondLock = fromAccNum.compareTo(toAccNum) < 0 ? to : from;
+
+            synchronized (firstLock) {           // lock lower account number first
+                synchronized (secondLock) {      // then higher — ALWAYS this order
+
+                    boolean withdrawn = false;
+                    try {
+                        from.withdraw(amount);
+                        withdrawn = true;
+                        to.deposit(amount);
+                    } catch (Exception e) {
+                        if (withdrawn) {
+                            from.deposit(amount);   // rollback
+                            System.out.println("  ⚠️  Transfer rolled back.");
+                        }
+                        throw e;
+                    }
+
+                    publish(new BankEvent.TransactionEvent(
+                            fromAccNum, TransactionType.TRANSFER_OUT, amount));
+                    publish(new BankEvent.TransactionEvent(
+                            toAccNum, TransactionType.TRANSFER_IN, amount));
+                    markDirty();
+
+                    TransferResult result = TransferResult.success(
+                            fromAccNum, toAccNum, amount,
+                            from.getBalance(), to.getBalance());
+                    System.out.println("  " + result.toDisplayString());
+                    return result;
+                }
+            }
+
+        } catch (AccountNotFoundException e) {
+            System.out.println("  ❌ " + e.toDisplayString());
+            return TransferResult.failure(fromAccNum, toAccNum, amount, e.getMessage());
+        } catch (InsufficientFundsException e) {
+            System.out.println("  ❌ " + e.toDisplayString());
+            return TransferResult.failure(fromAccNum, toAccNum, amount, e.getMessage());
+        } catch (AccountFrozenException e) {
+            System.out.println("  ❌ " + e.toDisplayString());
+            return TransferResult.failure(fromAccNum, toAccNum, amount, e.getMessage());
+        }
+    }
+
+    // NEW — REST transfer. NO @Transactional yet — we want to SEE the pain first.
+    @Transactional
+    public TransferResult transferByAccountNumber(String fromAccNum, String toAccNum, double amount) {
+
+        BankAccount from = repository.getByAccountNumber(fromAccNum);
+        from.withdraw(amount);
+        repository.save(from);              // ← DB WRITE #1: sender debited & COMMITTED
+
+        BankAccount to = repository.getByAccountNumber(toAccNum);
+        to.deposit(amount);                 // ← if 'to' is FROZEN, this THROWS here
+        repository.save(to);               // ← DB WRITE #2: never reached on failure
+
+        return TransferResult.success(fromAccNum, toAccNum, amount,
+                from.getBalance(), to.getBalance());
+    }
+
+
+
+    // --- Status changes ---
+
+    public void changeStatus(BankAccount account, AccountStatus newStatus) {
+        AccountStatus oldStatus = account.getStatus();
+        account.changeStatus(newStatus);
+        markDirty();
+        publish(new BankEvent.AccountEvent.StatusChanged(
+                account.getAccountNumber(), oldStatus, newStatus));
+    }
+
+    // --- Close Account ---
+
+    public boolean closeAccount(String accountNumber) {
+        BankAccount account = repository.getByAccountNumber(accountNumber);
+
+        if (account.getBalance() > 0) {
+            System.out.println("  ⚠️  Account has $" + String.format("%,.2f", account.getBalance())
+                    + " — withdraw funds first.");
+            return false;
+        }
+
+        repository.remove(account);
+        riskService.unflag(accountNumber);
+        markDirty();
+        System.out.println("  🗑️  Account " + accountNumber + " closed.");
+        publish(new BankEvent.AccountEvent.AccountClosed(accountNumber));
+        return true;
+    }
+
+    // --- Reports ---
+
+    public void printDashboard() {
+        List<BankAccount> all = repository.getAll();
+
+        System.out.println();
+        System.out.println("╔══════════════════════════════════════════════╗");
+        System.out.println("║            SMARTBANK DASHBOARD               ║");
+        System.out.println("╠══════════════════════════════════════════════╣");
+
+        if (all.isEmpty()) {
+            System.out.println("║  No accounts.");
+            System.out.println("╚══════════════════════════════════════════════╝");
+            return;
+        }
+
+        // Account stats using streams
+        var stats = all.stream()
+                .mapToDouble(BankAccount::getBalance)
+                .summaryStatistics();
+
+        long active = all.stream().filter(BankAccount::isActive).count();
+        long frozen = all.stream().filter(a -> !a.isActive()).count();
+        long flagged = all.stream()
+                .filter(a -> riskService.isFlagged(a.getAccountNumber())).count();
+
+        System.out.printf("║  Accounts: %d total | %d active | %d frozen | %d flagged%n",
+                all.size(), active, frozen, flagged);
+        System.out.printf("║  Total: $%,.2f | Avg: $%,.2f | Max: $%,.2f | Min: $%,.2f%n",
+                stats.getSum(), stats.getAverage(), stats.getMax(), stats.getMin());
+
+        // Top 3 by balance using sorted stream
+        System.out.println("╠══════════════════════════════════════════════╣");
+        System.out.println("║  🏆 Top accounts:");
+
+        all.stream()
+                .sorted(Comparator.comparingDouble(BankAccount::getBalance).reversed())
+                .limit(3)
+                .forEach(acc -> {
+                    String flag = riskService.isFlagged(acc.getAccountNumber()) ? " 🚩" : "";
+                    System.out.printf("║    %s %s — $%,.2f%s%n",
+                            acc.getStatus().icon(), acc.getOwnerName(),
+                            acc.getBalance(), flag);
+                });
+
+        // All transactions across all accounts using flatMap
+        long totalTxns = all.stream()
+                .mapToInt(BankAccount::getTransactionCount)
+                .sum();
+
+        // Unique transaction types using distinct
+        List<String> types = all.stream()
+                .flatMap(acc -> acc.getTransactions().stream())
+                .map(txn -> txn.getType().displayName())
+                .distinct()
+                .sorted()
+                .toList();
+
+        System.out.println("╠══════════════════════════════════════════════╣");
+        System.out.println("║  Transactions: " + totalTxns + " total");
+        System.out.println("║  Types seen: " + String.join(", ", types));
+        System.out.println("╚══════════════════════════════════════════════╝");
+
+        // Account types breakdown using streams + groupingBy
+        var typeBreakdown = all.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        acc -> acc.getAccountType().displayName(),
+                        java.util.stream.Collectors.counting()));
+
+        System.out.println("╠══════════════════════════════════════════════╣");
+        System.out.println("║  📊 By type:");
+        typeBreakdown.forEach((type, count) ->
+                System.out.println("║    " + type + ": " + count + " account(s)"));
+
+        // Monthly interest preview
+        double monthlyInterest = all.stream()
+                .filter(BankAccount::isActive)
+                .mapToDouble(BankAccount::calculateInterest)
+                .sum();
+        double monthlyFees = all.stream()
+                .filter(BankAccount::isActive)
+                .mapToDouble(BankAccount::getMonthlyFee)
+                .sum();
+
+        System.out.printf("║  💰 Monthly interest (projected): $%,.2f%n", monthlyInterest);
+        System.out.printf("║  💸 Monthly fees (projected):     $%,.2f%n", monthlyFees);
+    }
+
+    public void printAccountReport(BankAccount account) {
+        System.out.println(ReceiptGenerator.generateAccountReport(account));
+    }
+
+    public void searchAccounts(String searchTerm) {
+        var results = repository.searchByName(searchTerm);
+
+        System.out.println();
+        if (results.isEmpty()) {
+            System.out.println("  No accounts found matching \"" + searchTerm + "\"");
+            return;
+        }
+
+        System.out.println("  Found " + results.size() + " account(s):");
+        results.forEach(acc -> {
+            String flag = riskService.isFlagged(acc.getAccountNumber()) ? " 🚩" : "";
+            System.out.println("    " + acc + flag);
+        });
+    }
+
+    // --- Data persistence ---
+
+    public void saveAll() {
+        try {
+            List<BankAccount> all = repository.getAll();
+            storage.saveState(all);
+            storage.saveFlaggedAccounts(riskService.getFlaggedAccounts());
+            dirty = false;
+            System.out.println("  ✅ All data saved.");
+        } catch (StorageException e) {
+            System.out.println("  ❌ Save failed: " + e.getMessage());
+        }
+    }
+
+    public void loadAll() {
+        try {
+            List<BankAccount> loaded = storage.loadAccounts();
+            if (!loaded.isEmpty()) {
+                repository.clear();
+                repository.saveAll(loaded);
+                riskService.loadFlags(storage.loadFlaggedAccounts());
+            }
+        } catch (Exception e) {
+            System.out.println("  ❌ Load failed: " + e.getMessage());
+        }
+    }
+
+    // --- Accessors for Main to use ---
+
+    public AccountRepository getRepository() {
+        return repository;
+    }
+
+    public RiskService getRiskService() {
+        return riskService;
+    }
+
+    public TransactionTracker getTracker() {
+        return tracker;
+    }
+
+    public void applyMonthlyInterest() {
+        new MonthlyInterestOperation(repository, this::publish).execute();
+    }
+
+    public void applyMonthlyFees() {
+        new MonthlyFeesOperation(repository, this::publish).execute();
+    }
+
+    private void markDirty() {
+        dirty = true;
+    }
+
+    public boolean isDirty() {
+        return dirty;
+    }
+}
