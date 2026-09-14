@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.security.core.AuthenticationException;
 
 import java.time.Instant;
 import java.util.stream.Collectors;
@@ -85,5 +86,15 @@ public class GlobalExceptionHandler {
                 message
         );
         return ResponseEntity.status(status).body(body);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(
+            AuthenticationException exception) {
+
+        return build(
+                HttpStatus.UNAUTHORIZED,
+                "Invalid username or password"
+        );
     }
 }
